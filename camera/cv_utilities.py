@@ -48,3 +48,4 @@ def get_img_center(img, corners, camera_pose, object_side=150):
     relative_pose = get_camera_pose(img, corners, object_side)
     
 
+
