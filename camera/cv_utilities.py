@@ -36,16 +36,25 @@ def get_closest_corners(img, targets, corners):
         res.append(best[1])
     return res
 
-def get_camera_pose(img, corners, object_side):
+def get_camera_pose(img, corners, square):
     camera_matrix, dist_matrix = load_coefficients()
-    hl = object_side/2
-    rvec, tvec = cv2.solvePnP([[-hl, hl], [hl, hl], [hl, -hl], [-hl, -hl]], corners, camera_matrix, cv::noArray())
+    rvec, tvec = cv2.solvePnP(square, corners, camera_matrix, cv::noArray())
     R = cv.Rodrigues(rvec)
     return R, t
 
 
 def get_img_center(img, corners, camera_pose, object_side=150):
-    relative_pose = get_camera_pose(img, corners, object_side)
-    
+    hl = object_side/2
+    square = [[-hl, hl, 0], [hl, hl, 0], [hl, -hl, 0], [-hl, -hl, 0]]
 
+    relative_pose = get_camera_pose(img, corners, square)
+    rel_R, rel_pos = relative_pose
+    cam_R, cam_pos = camera_pose
+
+    middle = (0, 0, 0)
+    middle -= rel_pos
+    middle = middle @ np.linalg.inv(rel_R)
+    middle = middle @ cam_R
+    middle += cam_pos
+    return middle
 
