@@ -19,12 +19,12 @@ paths = [
     # "test/phone/easy1.png",
     # "test/phone/easy2.png",
     # "test/phone/easy3.png",
-    # "test/phone/easy4.png",
-    # "test/phone/med1.png",
+    "test/phone/easy4.png",
+    "test/phone/med1.png",
     # "test/phone/med2.png",
     "test/phone/med3.png",
     # "test/phone/hard1.png",
-    "test/phone/weird1.png",
+    # "test/phone/weird1.png",
 ]
 
 # paths_white = [

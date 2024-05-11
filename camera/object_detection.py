@@ -4,27 +4,10 @@ import sys
 from cv_utilities import get_closest_corners, get_corners, draw_image_corners
 from utils import time_elapsed
 
-TARGET_N_PATH = "targets/target_n.jpg"
-TARGET_R_PATH = "targets/target_r.jpg"
-TARGET_HELIPAD_PATH = "targets/helipad.jpg"
-
-TARGET_N = None
-TARGET_R = None
-TARGET_HELIPAD = None
-
 def load_target_image(path):
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE) # TODO: Don't read it from file
     img = cv2.resize(img, (800, 800)) # TODO: Maybe remove the resizing?
     return img
-
-def init():
-    global TARGET_N, TARGET_R, TARGET_HELIPAD
-    if not TARGET_N:
-        TARGET_N = load_target_image(TARGET_N_PATH)
-    if not TARGET_R:
-        TARGET_R = load_target_image(TARGET_R_PATH)
-    if not TARGET_HELIPAD:
-        TARGET_HELIPAD = load_target_image(TARGET_HELIPAD_PATH)
 
 def denoise_image(img):
     return cv2.fastNlMeansDenoising(img)
@@ -37,35 +20,12 @@ def detect_all_targets(camera_image_path, target_paths):
 
     res_all = []
     for target_obj in target_paths:
-        target_name = target_obj.name
-        target_path = target_obj.path
-        found, corners = detect_object(camera_image, target_path)
+        target_name = target_obj['name']
+        target_image = target_obj['image']
+        found, corners = detect_object(camera_image, target_image)
         precise_corners = get_closest_corners(camera_image, corners, subpixel_corners)
         result = {
             "name": target_name,
-            "path": target_path,
-            "corners": precise_corners,
-            "found": found
-        }
-        res_all.append(result)
-    return res_all
-
-def detect_all(camera_image_path):
-    init()
-    camera_image = cv2.imread(camera_image_path, cv2.IMREAD_GRAYSCALE)
-    camera_image = denoise_image(camera_image)
-    subpixel_corners = get_corners(camera_image)
-    # draw_image_corners(draw_img, subpixel_corners)
-
-    res_all = []
-    for target_img, name in [(TARGET_N, "target_N"), (TARGET_R, "target_R"), (TARGET_HELIPAD, "HELIPAD")]:
-        time_elapsed("Start", False)
-        found, corners = detect_object(camera_image, target_img)
-        # time_elapsed("Object detection")
-        precise_corners = get_closest_corners(camera_image, corners, subpixel_corners)
-        time_elapsed("Done")
-        result = {
-            "name": name,
             "corners": precise_corners,
             "found": found
         }
