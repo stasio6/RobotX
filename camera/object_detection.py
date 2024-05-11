@@ -10,6 +10,27 @@ TARGET_HELIPAD = "targets/helipad.jpg"
 def denoise_image(img):
     return cv2.fastNlMeansDenoising(img)
 
+def detect_all_targets(camera_image_path, target_paths):
+    camera_image = cv2.imread(camera_image_path, cv2.IMREAD_GRAYSCALE)
+    camera_image = denoise_image(camera_image)
+    subpixel_corners = get_corners(camera_image)
+    # draw_image_corners(draw_img, subpixel_corners)
+
+    res_all = []
+    for target_obj in target_paths:
+        target_name = target_obj.name
+        target_path = target_obj.path
+        found, corners = detect_object(camera_image, target_path)
+        precise_corners = get_closest_corners(camera_image, corners, subpixel_corners)
+        result = {
+            "name": target_name,
+            "path": target_path,
+            "corners": precise_corners,
+            "found": found
+        }
+        res_all.append(result)
+    return res_all
+
 def detect_all(camera_image_path):
     camera_image = cv2.imread(camera_image_path, cv2.IMREAD_GRAYSCALE)
     camera_image = denoise_image(camera_image)

@@ -29,15 +29,13 @@ def capture_image():
     return frame
 
 def output_clr_image(path):
-#     img = capture_image()
-#     cv2.imwrite(path, img)
-    print("Ouput CLR image to", path)
+    img = capture_image()
+    cv2.imwrite(path, img)
 
 def output_bw_image(path):
-#     img = capture_image()
-#     bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-#     cv2.imwrite(path, bw)
-    print("Ouput BW image to", path)
+    img = capture_image()
+    bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    cv2.imwrite(path, bw)
 
 def interval(num, interval, path, color=False):
     num = int(num)
@@ -47,9 +45,8 @@ def interval(num, interval, path, color=False):
     def cap():
         nonlocal ctr
         ctr += 1
-        print(path)
         fpath = path.replace(".jpg", "")
-        fpath = path + "_" + str(int(time.time())) + "_" + '{:05d}'.format(ctr) + ".jpg"
+        fpath = fpath + "_" + str(int(time.time())) + "_" + '{:05d}'.format(ctr) + ".jpg"
         if color:
             output_clr_image(fpath)
         else:
