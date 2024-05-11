@@ -27,15 +27,26 @@ paths = [
     "test/phone/weird1.png",
 ]
 
-# for path in paths:
-#     results = detect_all(path)
-#     draw_image_objects(path, results)
+# paths_white = [
+#     "test/white/white1.png",
+#     "test/white/white2.png",
+#     "test/white/white3.png",
+#     "test/white/white4.png",
+#     "test/white/white5.png",
+#     "test/white/white6.png",
+#     "test/white/white7.png",
+#     "test/white/white8.png",
+# ]
+
+for path in paths:
+    results = detect_all(path)
+    draw_image_objects(path, results)
 
 
 
 # OBJECT LOCALIZATION TEST
-path = "test/phone/med3.png"
-results = detect_all(path)
-for r in results:
-    if r["found"]:
-        print("location of", r["path"], "is:", get_img_center(r["corners"], (np.diag([1,1,1]), [1, 2, 3])))
+# path = "test/phone/med3.png"
+# results = detect_all(path)
+# for r in results:
+#     if r["found"]:
+#         print("location of", r["path"], "is:", get_img_center(r["corners"], (np.diag([1,1,1]), [1, 2, 3])))
