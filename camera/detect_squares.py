@@ -2,9 +2,10 @@ import cv2
 import numpy as np
 from cv_utilities import get_closest_corners, get_corners
 
-img = cv2.imread('test/img1.jpg', cv2.IMREAD_COLOR)
+img = cv2.imread('test/cse/img1.jpg', cv2.IMREAD_COLOR)
 # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-gray = cv2.imread('test/img1.jpg', cv2.IMREAD_GRAYSCALE)
+gray = cv2.imread('test/cse/img1.jpg', cv2.IMREAD_GRAYSCALE)
+# TODO: Denoising
 
 kernel = np.ones((7, 7), np.uint8) 
 closing = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel, iterations=1) 
