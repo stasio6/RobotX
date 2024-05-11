@@ -1,5 +1,5 @@
 from calibrate_camera import undistort_image
-from object_detection import detect_object, detect_all
+from object_detection import detect_object, detect_all, load_target_image
 from cv_utilities import draw_image_objects
 from transformations import get_img_center
 import numpy as np
@@ -39,6 +39,20 @@ paths = [
 # ]
 
 for path in paths:
+    target_images = [
+      {
+          "name": "target_n",
+          "image": load_target_image(PIPELINE_TARGET_N_PATH),
+      },
+      {
+          "name": "target_r",
+          "image": load_target_image(PIPELINE_TARGET_R_PATH),
+      },
+      {
+          "name": "target_heli",
+          "image": load_target_image(PIPELINE_TARGET_HELI_PATH),
+      }
+    ]
     results = detect_all(path)
     draw_image_objects(path, results)
 
