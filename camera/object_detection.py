@@ -14,8 +14,6 @@ def detect_all(camera_image_path):
     camera_image = cv2.imread(camera_image_path, cv2.IMREAD_GRAYSCALE)
     camera_image = denoise_image(camera_image)
     subpixel_corners = get_corners(camera_image)
-    # import copy
-    # draw_img = copy.copy(camera_image)
     # draw_image_corners(draw_img, subpixel_corners)
 
     res_all = []
@@ -33,14 +31,11 @@ def detect_all(camera_image_path):
 def detect_object(camera_image, target_image_path):
     # Read the smaller image and the larger camera image
     target_image = cv2.imread(target_image_path, cv2.IMREAD_GRAYSCALE) # TODO: Don't read it from file
-    target_image = cv2.resize(target_image, (800, 800))
-    # camera_image = cv2.imread(camera_image, cv2.IMREAD_GRAYSCALE)
-    # camera_image = cv2.fastNlMeansDenoising(camera_image)
-    # camera_image = cv2.resize(camera_image, (400, 1000))
+    target_image = cv2.resize(target_image, (800, 800)) # TODO: Maybe remove the resizing?
 
     if target_image is None or camera_image is None:
         print("Failed to load images!")
-        return -1
+        return False, []
     
     found, corners = detect_object_sift(target_image, camera_image)
     res = []
@@ -99,35 +94,3 @@ def detect_object_sift(target_image, camera_image):
     # cv2.imshow("Result", result_image)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-
-def detect_object_orb(target_image, camera_image):
-
-    # Initialize the ORB detector algorithm 
-    orb = cv2.ORB_create() 
-    
-    # Now detect the keypoints and compute 
-    # the descriptors for the query image 
-    # and train image 
-    targetKeypoints, targetDescriptors = orb.detectAndCompute(target_image,None) 
-    cameraKeypoints, cameraDescriptors = orb.detectAndCompute(camera_image,None) 
-    
-    # Create BFMatcher object with distance measurement cv2.NORM_HAMMING
-    matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True) # TODO: Maybe False?
-
-    # Match descriptors using KNN
-    matches = matcher.knnMatch(targetDescriptors, cameraDescriptors, k=2)
-
-    # Apply ratio test to filter good matches
-    good_matches = []
-    for m, n in matches:
-        if m.distance < 0.8 * n.distance:
-            good_matches.append(m)
-
-    # Draw first 10 matches.
-    result_image = cv2.drawMatches(target_image, targetKeypoints, camera_image, cameraKeypoints, good_matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-    
-    result_image = cv2.resize(result_image, (1000,650)) 
-    
-    # Show the final image 
-    cv2.imshow("Matches", result_image) 
-    cv2.waitKey(0) 

@@ -12,14 +12,9 @@ import cv2
 # img = undistort_image(img)
 # cv2.imwrite('und.jpg', img)
 
-# OBJECT DETECTION TEST
 
-# path = "test/phone/easy2.png"
-# img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-# img = cv2.fastNlMeansDenoising(img)
-# detect_object(path)
 
-# Corner detection full pipeline TEST
+# OBJECT DETECTION full pipeline TEST
 paths = [
     # "test/phone/easy1.png",
     # "test/phone/easy2.png",
@@ -31,9 +26,16 @@ paths = [
     # "test/phone/hard1.png",
     "test/phone/weird1.png",
 ]
-for path in paths:
-    results = detect_all(path)
-    # draw_image_objects(path, results)
-    for r in results:
-        if r["found"]:
-            print("location of", r["path"], "is:", get_img_center(r["corners"], (np.diag([1,1,1]), [1, 2, 3])))
+
+# for path in paths:
+#     results = detect_all(path)
+#     draw_image_objects(path, results)
+
+
+
+# OBJECT LOCALIZATION TEST
+path = "test/phone/med3.png"
+results = detect_all(path)
+for r in results:
+    if r["found"]:
+        print("location of", r["path"], "is:", get_img_center(r["corners"], (np.diag([1,1,1]), [1, 2, 3])))
