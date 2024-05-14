@@ -1,9 +1,14 @@
 from calibrate_camera import undistort_image
-from object_detection import detect_object, detect_all, load_target_image
+from object_detection import detect_all_targets, prepare_target_images
 from cv_utilities import draw_image_objects
+from utils import time_elapsed
 from transformations import get_img_center
 import numpy as np
 import cv2
+
+PIPELINE_TARGET_N_PATH = "targets/target_n.jpg"
+PIPELINE_TARGET_R_PATH = "targets/target_r.jpg"
+PIPELINE_TARGET_HELI_PATH = "targets/helipad.jpg"
 
 # UNDISTORT TEST
 
@@ -38,23 +43,28 @@ paths = [
 #     "test/white/white8.png",
 # ]
 
-for path in paths:
-    target_images = [
+target_images = [
       {
           "name": "target_n",
-          "image": load_target_image(PIPELINE_TARGET_N_PATH),
+          "path": PIPELINE_TARGET_N_PATH,
       },
       {
           "name": "target_r",
-          "image": load_target_image(PIPELINE_TARGET_R_PATH),
+          "path": PIPELINE_TARGET_R_PATH,
       },
-      {
-          "name": "target_heli",
-          "image": load_target_image(PIPELINE_TARGET_HELI_PATH),
-      }
+    #   {
+    #       "name": "target_heli",
+    #       "path": PIPELINE_TARGET_HELI_PATH,
+    #   }
     ]
-    results = detect_all(path)
-    draw_image_objects(path, results)
+
+for path in paths:
+    time_elapsed("Start", False)
+    target_images = prepare_target_images(target_images)
+    time_elapsed("Target images ready")
+    results = detect_all_targets(path, target_images)
+    exit(0)
+    # draw_image_objects(path, results)
 
 
 

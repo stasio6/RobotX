@@ -4,53 +4,55 @@ import sys
 from cv_utilities import get_closest_corners, get_corners, draw_image_corners
 from utils import time_elapsed
 
+sift = cv2.SIFT_create()
+
 def load_target_image(path):
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE) # TODO: Don't read it from file
     img = cv2.resize(img, (800, 800)) # TODO: Maybe remove the resizing?
     return img
 
+def prepare_target_images(target_images):
+    for target_image in target_images:
+        target_image["image"] = load_target_image(target_image["path"])
+        target_image["descriptors"] = calculate_key_descriptors(target_image["image"])
+    return target_images
+
 def denoise_image(img):
     return cv2.fastNlMeansDenoising(img)
 
-def detect_all_targets(camera_image_path, target_paths):
+def detect_all_targets(camera_image_path, target_images):
+    time_elapsed("Start", False)
+    print("Start")
     camera_image = cv2.imread(camera_image_path, cv2.IMREAD_GRAYSCALE)
+    time_elapsed("Image loaded")
     camera_image = denoise_image(camera_image)
+    time_elapsed("Image denoised")
     subpixel_corners = get_corners(camera_image)
+    camera_image_kd = calculate_key_descriptors(camera_image)
+    time_elapsed("Preprocessing")
     # draw_image_corners(draw_img, subpixel_corners)
 
     res_all = []
-    for target_obj in target_paths:
-        target_name = target_obj['name']
-        target_image = target_obj['image']
-        found, corners = detect_object(camera_image, target_image)
+    for target_obj in target_images:
+        found, corners = detect_object_sift(target_obj["descriptors"], camera_image_kd, target_obj["image"].shape)
         precise_corners = get_closest_corners(camera_image, corners, subpixel_corners)
+        time_elapsed("SIFT")
         result = {
-            "name": target_name,
+            "name": target_obj["name"],
             "corners": precise_corners,
             "found": found
         }
         res_all.append(result)
     return res_all
 
-def detect_object(camera_image, target_image):
+def calculate_key_descriptors(image):
+    return sift.detectAndCompute(image, None)
 
-    if target_image is None or camera_image is None:
-        print("Failed to load images!")
-        return False, []
-    
-    found, corners = detect_object_sift(target_image, camera_image)
-
-    res = []
-    for c in corners:
-        res.append(c[0])
-    return found, res
-
-def detect_object_sift(target_image, camera_image):
-    sift = cv2.SIFT_create()
+def detect_object_sift(target_image_kd, camera_image_kd, target_image_shape):
 
     # Detect keypoints and compute descriptors for both images
-    target_keypoints, target_descriptors = sift.detectAndCompute(target_image, None)
-    camera_keypoints, camera_descriptors = sift.detectAndCompute(camera_image, None)
+    target_keypoints, target_descriptors = target_image_kd
+    camera_keypoints, camera_descriptors = camera_image_kd
 
     # Create FLANN-based matcher
     FLANN_INDEX_KDTREE = 0
@@ -80,11 +82,15 @@ def detect_object_sift(target_image, camera_image):
     homography, _ = cv2.findHomography(target_points, camera_points, cv2.RANSAC)
 
     # Get the corners of the target image
-    target_corners = np.float32([[0, 0], [target_image.shape[1], 0], [target_image.shape[1], target_image.shape[0]], [0, target_image.shape[0]]]).reshape(-1, 1, 2)
+    target_corners = np.float32([[0, 0], [target_image_shape[1], 0], [target_image_shape[1], target_image_shape[0]], [0, target_image_shape[0]]]).reshape(-1, 1, 2)
     
     # Transform the corners using the homography
     camera_corners = cv2.perspectiveTransform(target_corners, homography)
-    return True, camera_corners
+
+    corners = []
+    for c in camera_corners:
+        corners.append(c[0])
+    return True, corners
 
     # Draw the matched region on the camera image
     # result_image = cv2.cvtColor(camera_image, cv2.COLOR_GRAY2BGR)
