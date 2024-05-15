@@ -1,42 +1,36 @@
 import cv2
 import numpy as np
 import sys
-from cv_utilities import get_closest_corners, get_corners, draw_image_corners
+from cv_utilities import get_closest_corners, get_corners, draw_image_corners, load_camera_image
 from utils import time_elapsed
 
 sift = cv2.SIFT_create()
-
-def load_target_image(path):
-    img = cv2.imread(path, cv2.IMREAD_GRAYSCALE) # TODO: Don't read it from file
-    img = cv2.resize(img, (800, 800)) # TODO: Maybe remove the resizing?
-    return img
-
-def prepare_target_images(target_images):
-    for target_image in target_images:
-        target_image["image"] = load_target_image(target_image["path"])
-        target_image["descriptors"] = calculate_key_descriptors(target_image["image"])
-    return target_images
 
 def denoise_image(img):
     return cv2.fastNlMeansDenoising(img)
 
 def detect_all_targets(camera_image_path, target_images):
-    time_elapsed("Start", False)
-    print("Start")
-    camera_image = cv2.imread(camera_image_path, cv2.IMREAD_GRAYSCALE)
-    time_elapsed("Image loaded")
+    # time_elapsed("Start", False)
+    # print("Start")
+    camera_image = load_camera_image(camera_image_path)
+    # time_elapsed("Image loaded")
     camera_image = denoise_image(camera_image)
-    time_elapsed("Image denoised")
+    # time_elapsed("Image denoised")
     subpixel_corners = get_corners(camera_image)
     camera_image_kd = calculate_key_descriptors(camera_image)
-    time_elapsed("Preprocessing")
-    # draw_image_corners(draw_img, subpixel_corners)
+    # time_elapsed("Preprocessing")
+    # draw_image_corners(camera_image, subpixel_corners)
 
     res_all = []
     for target_obj in target_images:
-        found, corners = detect_object_sift(target_obj["descriptors"], camera_image_kd, target_obj["image"].shape)
-        precise_corners = get_closest_corners(camera_image, corners, subpixel_corners)
-        time_elapsed("SIFT")
+        try:
+            found, corners = detect_object_sift(target_obj["descriptors"], camera_image_kd, target_obj["image"].shape)
+            precise_corners = get_closest_corners(camera_image, corners, subpixel_corners)
+        except:
+            found = False
+            precise_corners = []
+            print("Exception occured")
+        # time_elapsed("SIFT")
         result = {
             "name": target_obj["name"],
             "corners": precise_corners,

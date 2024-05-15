@@ -1,6 +1,6 @@
 from calibrate_camera import undistort_image
-from object_detection import detect_all_targets, prepare_target_images
-from cv_utilities import draw_image_objects
+from object_detection import detect_all_targets, calculate_key_descriptors
+from cv_utilities import draw_image_objects, prepare_target_images
 from utils import time_elapsed
 from transformations import get_img_center
 import numpy as np
@@ -30,6 +30,7 @@ paths = [
     "test/phone/med3.png",
     # "test/phone/hard1.png",
     # "test/phone/weird1.png",
+    # "test/night1.jpg"
 ]
 
 # paths_white = [
@@ -43,6 +44,7 @@ paths = [
 #     "test/white/white8.png",
 # ]
 
+time_elapsed("", False)
 target_images = [
       {
           "name": "target_n",
@@ -58,13 +60,14 @@ target_images = [
     #   }
     ]
 
+target_images = prepare_target_images(target_images, calculate_key_descriptors)
+time_elapsed("Target images ready")
+
 for path in paths:
     time_elapsed("Start", False)
-    target_images = prepare_target_images(target_images)
-    time_elapsed("Target images ready")
     results = detect_all_targets(path, target_images)
-    exit(0)
-    # draw_image_objects(path, results)
+    # exit(0)
+    draw_image_objects(path, results)
 
 
 
