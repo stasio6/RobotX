@@ -24,13 +24,15 @@ paths = [
     # "test/phone/easy1.png",
     # "test/phone/easy2.png",
     # "test/phone/easy3.png",
-    "test/phone/easy4.png",
-    "test/phone/med1.png",
+    # "test/phone/easy4.png",
+    # "test/phone/med1.png",
     # "test/phone/med2.png",
-    "test/phone/med3.png",
+    # "test/phone/med3.png",
     # "test/phone/hard1.png",
     # "test/phone/weird1.png",
     # "test/night1.jpg"
+    "test/day1.jpg",
+    "test/day2.jpg"
 ]
 
 # paths_white = [
@@ -66,8 +68,22 @@ time_elapsed("Target images ready")
 for path in paths:
     time_elapsed("Start", False)
     results = detect_all_targets(path, target_images)
-    # exit(0)
     draw_image_objects(path, results)
+exit(0)
+
+for path in paths:
+    time_elapsed("Start", False)
+    results = detect_all_targets(path, target_images)
+    # exit(0)
+    results[0]["corners"] = [[325., 272.], [370., 282.], [355., 328.], [307., 312.]]
+    results[0]["found"] = True
+    print(results)
+    draw_image_objects(path, results)
+    for r in results:
+        # print(r["corners"])
+        if not r["found"]:
+            continue
+        print("location of", r["name"], "is:", get_img_center(r["corners"], (np.diag([1,1,1]), [0, 0, 6])))
 
 
 

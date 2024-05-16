@@ -84,6 +84,10 @@ def detect_object_sift(target_image_kd, camera_image_kd, target_image_shape):
     corners = []
     for c in camera_corners:
         corners.append(c[0])
+    res = corners[-1:]
+    res.extend(corners[:-1])
+    corners = res
+
     return True, corners
 
     # Draw the matched region on the camera image
