@@ -9,10 +9,14 @@ sift = cv2.SIFT_create()
 def denoise_image(img):
     return cv2.fastNlMeansDenoising(img)
 
-def detect_all_targets(camera_image_path, target_images):
+def detect_all_targets(image_data, target_objs):
     # time_elapsed("Start", False)
     # print("Start")
-    camera_image = load_camera_image(camera_image_path)
+    
+    ##### OLD CODE
+    # camera_image = load_camera_image(camera_image_path)
+    ##### NEW CODE 
+    camera_image = image_data["image"]
     # time_elapsed("Image loaded")
     camera_image = denoise_image(camera_image)
     # time_elapsed("Image denoised")
@@ -22,7 +26,7 @@ def detect_all_targets(camera_image_path, target_images):
     # draw_image_corners(camera_image, subpixel_corners)
 
     res_all = []
-    for target_obj in target_images:
+    for target_obj in target_objs:
         try:
             found, corners = detect_object_sift(target_obj["descriptors"], camera_image_kd, target_obj["image"].shape)
             precise_corners = get_closest_corners(camera_image, corners, subpixel_corners)
