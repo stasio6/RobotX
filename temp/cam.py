@@ -29,14 +29,14 @@ def capture_image():
     return frame
 
 def output_clr_image(path):
-#     img = capture_image()
-#     cv2.imwrite(path, img)
+    img = capture_image()
+    cv2.imwrite(path, img)
     print("Ouput CLR image to", path)
 
 def output_bw_image(path):
-#     img = capture_image()
-#     bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-#     cv2.imwrite(path, bw)
+    img = capture_image()
+    bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    cv2.imwrite(path, bw)
     print("Ouput BW image to", path)
 
 def interval(num, interval, path, color=False):

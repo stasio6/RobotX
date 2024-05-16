@@ -22,8 +22,10 @@ class SetInterval:
     def cancel(self):
         self.stopEvent.set()
 
-def capture_image():
+def capture_image(resolution=(1920, 1080)):
     cap = cv2.VideoCapture(0, cv2.CAP_V4L)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, resolution[0])
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution[0])
     ret, frame = cap.read()
     cap.release()
     return frame
