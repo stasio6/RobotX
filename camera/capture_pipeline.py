@@ -41,11 +41,11 @@ def save_json_data(json_path, image_path, image, metadata):
             "gps": metadata["gps_data"],
             "imu": metadata["imu_data"],
             "att": metadata["att_data"],
-            "image": image,
         }
     cv2.imwrite(image_path, image)
     with open(json_path, "w") as json_file:
         json.dump(json_data, json_file)
+    json_data["image"] = image
     return json_data
 
 def get_target_objs():
