@@ -1,5 +1,23 @@
 import cv2
 import numpy as np
+from calibrate_camera import undistort_image
+
+def load_target_image(path):
+    img = cv2.imread(path, cv2.IMREAD_GRAYSCALE) # TODO: Don't read it from file
+    img = cv2.resize(img, (800, 800)) # TODO: Maybe remove the resizing?
+    return img
+
+def load_camera_image(path, useColor=False):
+    color = cv2.IMREAD_COLOR if useColor else cv2.IMREAD_GRAYSCALE
+    camera_image = cv2.imread(path, color)
+    # camera_image = undistort_image(camera_image)
+    return camera_image
+
+def prepare_target_images(target_images, calculate_key_descriptors):
+    for target_image in target_images:
+        target_image["image"] = load_target_image(target_image["path"])
+        target_image["descriptors"] = calculate_key_descriptors(target_image["image"])
+    return target_images
 
 def get_corners(img, camera_image_path=None):
     # print(img)
@@ -30,7 +48,7 @@ def get_closest_corners(img, targets, corners):
     return res
 
 def draw_image_objects(img_path, results):
-    color_img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+    color_img = load_camera_image(img_path, True)
     for r in results:
         if not r['found']:
             continue
@@ -47,7 +65,7 @@ def draw_image_objects(img_path, results):
 def draw_image_corners(img, corners):
     import copy
     img = copy.copy(img)
-    # img = cv2.imread(img, cv2.IMREAD_COLOR)
+    # color_img = load_camera_image(img_path, True)
     for c in corners:
         import collections
         if isinstance([1, 2, 3], (collections.abc.Sequence, np.ndarray)):
