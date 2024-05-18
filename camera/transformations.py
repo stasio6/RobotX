@@ -2,25 +2,30 @@ import cv2
 import numpy as np
 from calibrate_camera import load_coefficients
 from scipy.spatial.transform import Rotation
+from gps_utils import add_distance_to_coordinates
 
 def get_relative_camera_pose(corners, square):
     camera_matrix, dist_matrix = load_coefficients()
-    print(corners)
-    print(square)
-    print(camera_matrix)
-    success, rvec, tvec = cv2.solvePnP(np.array(square), np.array(corners), camera_matrix, None, flags=cv2.SOLVEPNP_IPPE_SQUARE)
+    success, rvec, tvec = cv2.solvePnP(np.array(square), np.array(corners), camera_matrix, dist_matrix, flags=cv2.SOLVEPNP_IPPE_SQUARE)
     if not success:
-        print("SMUTACZ!")
+        raise Exception("PnP not successful")
+
     R = cv2.Rodrigues(rvec)[0]
-    print("OUT:", success, rvec, tvec)
-    print(R)
-    return R, tvec.reshape(-1)
+    tvec = tvec.reshape(-1)
+    # print("Relative camera pos", tvec)
+    # print("Relative rot", Rotation.from_matrix(R).as_euler('XYZ', degrees=True)) # Correct
+
+    middle = [tvec[0], -tvec[1], -tvec[2]]
+    # print("Rel middle", middle)
+    middle = middle @ np.linalg.inv(R)
+    # print("Rel rotated middle", middle)
+    return middle
 
 def get_camera_R(imu):
     roll = imu["roll"]
     pitch = imu["pitch"]
     yaw = imu["yaw"]
-    yaw = 0 # TODO: Remove, just for testing
+    # yaw = 0 # TODO: Remove this line, it's just for testing
     # print("roll:", roll, "pitch:", pitch, "yaw:", yaw)
     # print(Rotation.from_euler("XYZ", (roll, pitch, yaw), degrees=False).as_matrix())
     # print("\n")
@@ -33,32 +38,19 @@ def get_img_center(corners, lat, lon, alt, cam_R, object_side=150):
     hl = object_side/2
     square = [[-hl, hl, 0], [hl, hl, 0], [hl, -hl, 0], [-hl, -hl, 0]]
 
-    rel_R, rel_pos = get_relative_camera_pose(corners, square)
-    print("Relative camera pos", rel_pos)
-    # Normalize roll pitch roll to assume camera is looking down
-    roll,pitch,yaw = Rotation.from_matrix(rel_R).as_euler('xyz', degrees=True)
-    roll += 180
-    # yaw *= -1
-    rel_R = Rotation.from_euler("XYZ", (roll, pitch, yaw), degrees=True).as_matrix()
-    print("Relative rot", Rotation.from_matrix(rel_R).as_euler('xyz', degrees=True))
-    # print(cam_R)
-
-    middle = (0, 0, 0)
-    middle -= rel_pos
-    print("mid:", middle)
-    print(np.linalg.inv(rel_R))
-    middle = middle @ np.linalg.inv(rel_R)
-    print("mid:", middle)
-    print("cam_R", cam_R)
+    middle = get_relative_camera_pose(corners, square)
+    # print("mid:", middle)
+    # print("cam_R", cam_R)
     middle = middle @ cam_R
-    print("result:", middle)
-    return middle # TODO: Remove
+    # print("result:", middle)
+    # return middle # TODO: Remove
 
     # TODO: Take into account camera-GPS offset
-    lon += middle[0] # TODO: Use gps add
-    lat -= middle[1] # TODO: Use gps add
+    # lon += middle[0] # TODO: Use gps add
+    # lat -= middle[1] # TODO: Use gps add
+    lat, lon = add_distance_to_coordinates(lat, lon, middle[0], middle[1])
     alt -= middle[2]
-    return (lon, lat, alt)
+    return (lat, lon, alt)
 
 def localize_objects(metadata, detected_objects):
     lat, lon, alt = parse_gps(metadata["gps_data"])
