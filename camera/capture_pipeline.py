@@ -3,8 +3,10 @@
 import time
 import json
 from object_detection import detect_all_targets, calculate_key_descriptors
-from cv_utilities import load_target_image, prepare_target_images
-from pymavlink import mavutil
+from cv_utilities import load_target_image, prepare_target_images, draw_image_objects
+from transformations import localize_objects
+from aggregator import aggregate_results
+# from pymavlink import mavutil
 from cam import SetInterval
 from cam import capture_image as take_picture 
 from pixhawk_utils import get_pixhawk_data
@@ -48,45 +50,36 @@ def save_json_data(json_path, image_path, image, metadata):
     json_data["image"] = image
     return json_data
 
-def get_target_objs():
-    target_objs = [
-        { "path": PIPELINE_TARGET_N_PATH },
-        { "path": PIPELINE_TARGET_R_PATH },
-        { "path": PIPELINE_TARGET_HELI_PATH }
-    ]
-    target_objs = prepare_target_images(target_objs, calculate_key_descriptors)
-    return target_objs
-
-def localize_objects(current_drone_gps, detected_objects):
-    print("LOCALIZE NOT IMPLEMENTED")
-
-def aggregate_results(object_locations):
-    print("AGGREGATE NOT IMPLEMENTED")
-
-def pipeline(iter_count, target_images):
+def pipeline(iter_count, target_objs):
     image_path = PIPELINE_IMAGE_ROOT_PATH + str(time.time()) + "_" + '{:05d}'.format(iter_count) + '.jpg'
     json_path = PIPELINE_JSON_ROOT_PATH + str(time.time()) + "_" + '{:05d}'.format(iter_count) + '.json'
-    metadata = get_cam_metadata()
-    image = take_picture()
-    image_data = save_json_data(json_path, image_path, image, metadata)
-    
-    # TODO: STAN, YOUR CODE SHOULD GO HERE VVVVV
-    target_objs = get_target_objs(image_data, target_objs)
-    detected_objects = detect_all_targets(image_data, target_objs)
-    # END OF OBJECT DETECT CODE
+    try:
+        metadata = get_cam_metadata()
+        image = take_picture()
+        image_data = save_json_data(json_path, image_path, image, metadata)
+        
+        detected_objects = detect_all_targets(image_data, target_objs)
+        draw_image_objects("test/full/img2.jpg", detected_objects)
+        object_locations = localize_objects(metadata, detected_objects)
 
-    object_locations = localize_objects(gps, detected_objects)
-    aggregate_results(object_locations)
+        results = aggregate_results(object_locations)
+    except Exception as error:
+        print("An exception occurred:", error)
 
 def exceute_pipeline():
     ctr = 1
     interval_handler = None
-    
-        
+
+    target_objs = [
+        { "name": "target_n", "path": PIPELINE_TARGET_N_PATH },
+        { "name": "target_r", "path": PIPELINE_TARGET_R_PATH },
+        { "name": "helipad", "path": PIPELINE_TARGET_HELI_PATH }
+    ]
+    target_objs = prepare_target_images(target_objs, calculate_key_descriptors)
 
     def pipeline_handler():
         nonlocal ctr
-        pipeline(ctr, target_images)
+        pipeline(ctr, target_objs)
         if ctr > PIPELINE_NUM_MAX_CAPTURES:
             interval_handler.cancel()
         ctr += 1
