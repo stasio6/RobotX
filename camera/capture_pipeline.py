@@ -20,14 +20,15 @@ PIPELINE_NUM_MAX_CAPTURES = 10
 PIPELINE_IMAGE_ROOT = 'captures/'
 PIPELINE_JSON_ROOT = 'json/'
 PIPELINE_SAVE_PREFIX = 'jetson_capture_'
-PIPELINE_PICKLE_ROOT = 'pickle/'
-PIPELINE_PICKLE_PATH_PREFIX = PIPELINE_PICKLE_ROOT + PIPELINE_SAVE_PREFIX
+PIPELINE_RESULT_ROOT = 'results/'
+PIPELINE_RESULT_PATH_PREFIX = PIPELINE_RESULT_ROOT + PIPELINE_SAVE_PREFIX
 PIPELINE_IMAGE_PATH_PREFIX = PIPELINE_IMAGE_ROOT + PIPELINE_SAVE_PREFIX
 PIPELINE_JSON_PATH_PREFIX = PIPELINE_JSON_ROOT + PIPELINE_SAVE_PREFIX
 PIPELINE_TARGET_N_PATH = "targets/target_n.jpg"
 PIPELINE_TARGET_R_PATH = "targets/target_r.jpg"
 PIPELINE_TARGET_HELI_PATH = "targets/helipad.jpg"
 PIPELINE_IMAGE_COLOR = False
+PIPELINE_PICTURE_ONLY = False
 
 """
 Pipeline: (repeated every n seconds)
@@ -37,10 +38,13 @@ Pipeline: (repeated every n seconds)
     Aggregate Results -> (Returns Object + location)
 """
 
-def save_capture_data(path, data):
-    import pickle
-    with open(path, "wb") as file:
-        pickle.dump(data, file)
+def save_capture_data(path, localization_data, aggregation_data):
+    json_data = {
+        "localization": localization_data,
+        "aggregation": aggregation_data
+    }
+    with open(json_path, "w") as json_file:
+        json.dump(json_data, json_file)
 
 def get_cam_metadata():
     master = mavutil.mavlink_connection(PIXHAWK_URL, baud=57600)
@@ -66,16 +70,17 @@ def pipeline(iter_count, target_objs):
     print("Pipeline Iteration:", iter_count)
     image_path = PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
     json_path = PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
-    pkl_path = PIPELINE_PICKLE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.pkl'
+    result_path = PIPELINE_RESULT_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
     try:
         metadata = get_cam_metadata()
         image = take_picture()
         image_data = save_json_data(json_path, image_path, image, metadata)
-        detected_objects = detect_all_targets(image_data, target_objs)
-        object_locations = localize_objects(metadata, detected_objects)
-        print(object_locations)
-        aggregate_data = aggregate_results(object_locations)
-        save_capture_data(pkl_path, aggregate_data)
+        if not PIPELINE_PICTURE_ONLY:
+            detected_objects = detect_all_targets(image_data, target_objs)
+            object_locations = localize_objects(metadata, detected_objects)
+            print(object_locations)
+            aggregate_data = aggregate_results(object_locations)
+            save_capture_data(result_path, object_locations, aggregate_data)
     except Exception as error:
         print("Error in pipeline:", error)
 
@@ -126,6 +131,7 @@ if __name__ == "__main__":
     parser.add_argument('--target-heli', type=str, default=PIPELINE_TARGET_HELI_PATH, help='Target Helipad path')
     parser.add_argument('--color', type=bool, default=PIPELINE_IMAGE_COLOR, help='Color image')
     parser.add_argument('--clean', action='store_true', default=False, help='Clean up images and jsons')
+    parser.add_argument('--picture-only', action='store_true', default=False, help='Only take pictures')
     args = parser.parse_args()
     if args.clean:
         clean()
@@ -137,5 +143,6 @@ if __name__ == "__main__":
     PIPELINE_TARGET_R_PATH = args.target_r
     PIPELINE_TARGET_HELI_PATH = args.target_heli
     PIPELINE_IMAGE_COLOR = args.color
+    PIPELINE_PICTURE_ONLY = args.picture_only
 
     exceute_pipeline()
