@@ -17,17 +17,22 @@ PIXHAWK_URL = "/dev/ttyTHS1"
 PIPELINE_STARTUP_DELAY_S = 10.0
 PIPELINE_INTERVAL_DELAY_S = 3.0
 PIPELINE_NUM_MAX_CAPTURES = 10
+# all data saved under PIPELINE_DATA_SAVE_ROOT/PIPELINE_DATA_SAVE_SUB_PREFIX + $TIME_STAMP/*
+PIPELINE_DATA_SAVE_ROOT = 'data/'
+PIPELINE_DATA_SAVE_SUB_PREFIX = ''
 PIPELINE_IMAGE_ROOT = 'captures/'
 PIPELINE_JSON_ROOT = 'json/'
 PIPELINE_SAVE_PREFIX = 'jetson_capture_'
-PIPELINE_PICKLE_ROOT = 'pickle/'
-PIPELINE_PICKLE_PATH_PREFIX = PIPELINE_PICKLE_ROOT + PIPELINE_SAVE_PREFIX
+PIPELINE_RESULT_ROOT = 'results/'
+PIPELINE_RESULT_PATH_PREFIX = PIPELINE_RESULT_ROOT + PIPELINE_SAVE_PREFIX
 PIPELINE_IMAGE_PATH_PREFIX = PIPELINE_IMAGE_ROOT + PIPELINE_SAVE_PREFIX
 PIPELINE_JSON_PATH_PREFIX = PIPELINE_JSON_ROOT + PIPELINE_SAVE_PREFIX
 PIPELINE_TARGET_N_PATH = "targets/target_n.jpg"
 PIPELINE_TARGET_R_PATH = "targets/target_r.jpg"
 PIPELINE_TARGET_HELI_PATH = "targets/helipad.jpg"
 PIPELINE_IMAGE_COLOR = False
+PIPELINE_PICTURE_ONLY = False
+PIPELINE_SAVE_ROOT = None
 
 """
 Pipeline: (repeated every n seconds)
@@ -37,10 +42,13 @@ Pipeline: (repeated every n seconds)
     Aggregate Results -> (Returns Object + location)
 """
 
-def save_capture_data(path, data):
-    import pickle
-    with open(path, "wb") as file:
-        pickle.dump(data, file)
+def save_capture_data(path, localization_data, aggregation_data):
+    json_data = {
+        "localization": localization_data,
+        "aggregation": aggregation_data
+    }
+    with open(json_path, "w") as json_file:
+        json.dump(json_data, json_file)
 
 def get_cam_metadata():
     master = mavutil.mavlink_connection(PIXHAWK_URL, baud=57600)
@@ -64,9 +72,9 @@ def save_json_data(json_path, image_path, image, metadata):
 
 def pipeline(iter_count, target_objs):
     print("Pipeline Iteration:", iter_count)
-    image_path = PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
-    json_path = PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
-    pkl_path = PIPELINE_PICKLE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.pkl'
+    image_path = PIPELINE_SAVE_ROOT + PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
+    json_path = PIPELINE_SAVE_ROOT + PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
+    result_path = PIPELINE_SAVE_ROOT + PIPELINE_RESULT_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
     try:
         print("Getting Metadata")
         metadata = get_cam_metadata()
@@ -81,6 +89,12 @@ def pipeline(iter_count, target_objs):
         aggregate_data = aggregate_results(object_locations)
         print("Saving PKL to path", pkl_path)
         save_capture_data(pkl_path, aggregate_data)
+        if not PIPELINE_PICTURE_ONLY:
+            detected_objects = detect_all_targets(image_data, target_objs)
+            object_locations = localize_objects(metadata, detected_objects)
+            print(object_locations)
+            aggregate_data = aggregate_results(object_locations)
+            save_capture_data(result_path, object_locations, aggregate_data)
     except Exception as error:
         print("Error in pipeline:", error)
 
@@ -107,6 +121,33 @@ def exceute_pipeline():
 
     interval_handler = SetInterval(float(PIPELINE_INTERVAL_DELAY_S), pipeline_handler)
 
+def get_current_datetime():
+    from datetime import datetime
+    now = datetime.now()
+    formatted_time = now.strftime("%y%m%d_%H%M%S")
+    return formatted_time
+
+def prepare_save_directory():
+    import os
+    directory = ''
+    directory += PIPELINE_DATA_SAVE_ROOT
+    directory += PIPELINE_DATA_SAVE_SUB_PREFIX
+    directory += get_current_datetime()
+    try:
+        os.mkdir(directory)
+        print(f"Directory '{directory}' created successfully.")
+    except Exception as err:
+        print("Exception occurred while trying to create directory:", err)
+        exit(1)
+    PIPELINE_SAVE_ROOT = directory
+    try:
+        os.mkdir(directory + "/" + PIPELINE_IMAGE_ROOT)
+        os.mkdir(directory + "/" + PIPELINE_JSON_ROOT)
+        os.mkdir(directory + "/" + PIPELINE_RESULT_ROOT)
+    except Exception as err:
+        print("Exception occurred while trying to create directory:", err)
+        exit(1)
+
 def clean():
     import os
     import glob
@@ -131,6 +172,7 @@ if __name__ == "__main__":
     parser.add_argument('--target-heli', type=str, default=PIPELINE_TARGET_HELI_PATH, help='Target Helipad path')
     parser.add_argument('--color', type=bool, default=PIPELINE_IMAGE_COLOR, help='Color image')
     parser.add_argument('--clean', action='store_true', default=False, help='Clean up images and jsons')
+    parser.add_argument('--picture-only', action='store_true', default=False, help='Only take pictures')
     args = parser.parse_args()
     if args.clean:
         clean()
@@ -142,5 +184,7 @@ if __name__ == "__main__":
     PIPELINE_TARGET_R_PATH = args.target_r
     PIPELINE_TARGET_HELI_PATH = args.target_heli
     PIPELINE_IMAGE_COLOR = args.color
+    PIPELINE_PICTURE_ONLY = args.picture_only
 
+    prepare_save_directory()
     exceute_pipeline()
