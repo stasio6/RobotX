@@ -42,11 +42,29 @@ Pipeline: (repeated every n seconds)
     Aggregate Results -> (Returns Object + location)
 """
 
-def save_capture_data(path, localization_data, aggregation_data):
+def unndarray(d):
+  import numpy as np
+  if isinstance(d, np.generic):
+    return float(d)
+  if isinstance(d, np.ndarray):
+    d = list(d)
+  if isinstance(d, list):
+    res = []
+    for i in range(len(d)):
+      res.append(unndarray(d[i]))
+    return res
+  if not isinstance(d, dict):
+    return d
+  for key in d:
+    d[key] = unndarray(d[key])    
+  return d
+
+def save_capture_data(json_path, localization_data, aggregation_data):
     json_data = {
         "localization": localization_data,
         "aggregation": aggregation_data
     }
+    json_data = unndarray(json_data)
     with open(json_path, "w") as json_file:
         json.dump(json_data, json_file)
 
@@ -63,6 +81,8 @@ def save_json_data(json_path, image_path, image, metadata):
             "att": metadata["att_data"],
         }
     print("Saving image to path:", image_path)
+    if image is None:
+        print("IMG NONE")
     cv2.imwrite(image_path, image)
     print("Saving JSON to path:", json_path)
     with open(json_path, "w") as json_file:
@@ -71,29 +91,25 @@ def save_json_data(json_path, image_path, image, metadata):
     return json_data
 
 def pipeline(iter_count, target_objs):
-    print("Pipeline Iteration:", iter_count)
-    image_path = PIPELINE_SAVE_ROOT + PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
-    json_path = PIPELINE_SAVE_ROOT + PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
-    result_path = PIPELINE_SAVE_ROOT + PIPELINE_RESULT_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
+    print("Capturing Picture:", iter_count)
+    image_path = PIPELINE_SAVE_ROOT + "/" + PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
+    json_path = PIPELINE_SAVE_ROOT + "/" +  PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
+    result_path = PIPELINE_SAVE_ROOT + "/" + PIPELINE_RESULT_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
     try:
         print("Getting Metadata")
         metadata = get_cam_metadata()
         print("Taking Picture")
         image = take_picture()
+        print("Saving JSON data")
         image_data = save_json_data(json_path, image_path, image, metadata)
-        print("Detecting Targets")
-        detected_objects = detect_all_targets(image_data, target_objs)
-        print("Running Localisation Algorithm")
-        object_locations = localize_objects(metadata, detected_objects)
-        print("Aggregating Data")
-        aggregate_data = aggregate_results(object_locations)
-        print("Saving PKL to path", pkl_path)
-        save_capture_data(pkl_path, aggregate_data)
         if not PIPELINE_PICTURE_ONLY:
+            print("Live Detect Mode, detecting objects")
             detected_objects = detect_all_targets(image_data, target_objs)
+            print("Running Localisation")
             object_locations = localize_objects(metadata, detected_objects)
-            print(object_locations)
+            print("Aggregating Results")
             aggregate_data = aggregate_results(object_locations)
+            print("Saving capture data")
             save_capture_data(result_path, object_locations, aggregate_data)
     except Exception as error:
         print("Error in pipeline:", error)
@@ -139,6 +155,7 @@ def prepare_save_directory():
     except Exception as err:
         print("Exception occurred while trying to create directory:", err)
         exit(1)
+    global PIPELINE_SAVE_ROOT
     PIPELINE_SAVE_ROOT = directory
     try:
         os.mkdir(directory + "/" + PIPELINE_IMAGE_ROOT)
