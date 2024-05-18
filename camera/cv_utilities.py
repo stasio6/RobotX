@@ -25,6 +25,7 @@ def get_corners(img, camera_image_path=None):
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     corners = cv2.goodFeaturesToTrack(img, 800, 0.01, 30)
     corners = corners_to_subpix2(img, corners)
     # draw_image_corners(img, corners)

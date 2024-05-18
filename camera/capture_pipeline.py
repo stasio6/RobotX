@@ -37,7 +37,6 @@ Pipeline: (repeated every n seconds)
 """
 
 def get_cam_metadata():
-    # TODO: remove the none
     master = mavutil.mavlink_connection(PIXHAWK_URL, baud=57600)
     metadata = get_pixhawk_data(master)
     return metadata
@@ -66,13 +65,15 @@ def pipeline(iter_count, target_objs):
         image = take_picture()
         image_data = save_json_data(json_path, image_path, image, metadata)
         detected_objects = detect_all_targets(image_data, target_objs)
-        draw_image_objects("test/full/img2.jpg", detected_objects)
+#        draw_image_objects("test/full/img2.jpg", detected_objects)
         object_locations = localize_objects(metadata, detected_objects)
+        print(object_locations)
         results = aggregate_results(object_locations)
     except Exception as error:
         print("Error in pipeline:", error)
 
 def exceute_pipeline():
+    print("Preparing Pipeline")
     ctr = 1
     interval_handler = None
 
@@ -81,8 +82,10 @@ def exceute_pipeline():
         { "name": "target_r", "path": PIPELINE_TARGET_R_PATH },
         { "name": "helipad", "path": PIPELINE_TARGET_HELI_PATH }
     ]
+    print("Preparing Target Images")
     target_objs = prepare_target_images(target_objs, calculate_key_descriptors)
-
+    
+    print("Starting pipeline") 
     def pipeline_handler():
         nonlocal ctr
         pipeline(ctr, target_objs)
@@ -104,7 +107,7 @@ def clean():
 
 if __name__ == "__main__":
     import argparse
-
+    print("Setting up Parser")
     parser = argparse.ArgumentParser(description='Capture Pipeline')
     parser.add_argument('--interval', type=float, default=PIPELINE_INTERVAL_DELAY_S, help='Interval between captures')
     parser.add_argument('--num-captures', type=int, default=PIPELINE_NUM_MAX_CAPTURES, help='Number of captures')
