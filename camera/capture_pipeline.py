@@ -68,13 +68,18 @@ def pipeline(iter_count, target_objs):
     json_path = PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
     pkl_path = PIPELINE_PICKLE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.pkl'
     try:
+        print("Getting Metadata")
         metadata = get_cam_metadata()
+        print("Taking Picture")
         image = take_picture()
         image_data = save_json_data(json_path, image_path, image, metadata)
+        print("Detecting Targets")
         detected_objects = detect_all_targets(image_data, target_objs)
+        print("Running Localisation Algorithm")
         object_locations = localize_objects(metadata, detected_objects)
-        print(object_locations)
+        print("Aggregating Data")
         aggregate_data = aggregate_results(object_locations)
+        print("Saving PKL to path", pkl_path)
         save_capture_data(pkl_path, aggregate_data)
     except Exception as error:
         print("Error in pipeline:", error)
@@ -86,8 +91,8 @@ def exceute_pipeline():
 
     target_objs = [
         { "name": "target_n", "path": PIPELINE_TARGET_N_PATH },
-        { "name": "target_r", "path": PIPELINE_TARGET_R_PATH },
-        { "name": "helipad", "path": PIPELINE_TARGET_HELI_PATH }
+        { "name": "target_r", "path": PIPELINE_TARGET_R_PATH }
+#        { "name": "helipad", "path": PIPELINE_TARGET_HELI_PATH }
     ]
     print("Preparing Target Images")
     target_objs = prepare_target_images(target_objs, calculate_key_descriptors)
