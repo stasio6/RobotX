@@ -58,5 +58,8 @@ def localize_objects(metadata, detected_objects):
     for detected_object in detected_objects:
         if not detected_object["found"]:
             continue
-        detected_object["real_world_pos"] = get_img_center(detected_object["corners"], lat, lon, alt, cam_R)
+        try:
+            detected_object["real_world_pos"] = get_img_center(detected_object["corners"], lat, lon, alt, cam_R)
+        except:
+            print("Object localization failed - invalid object detected")
     return detected_objects
