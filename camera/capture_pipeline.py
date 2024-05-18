@@ -17,6 +17,9 @@ PIXHAWK_URL = "/dev/ttyTHS1"
 PIPELINE_STARTUP_DELAY_S = 10.0
 PIPELINE_INTERVAL_DELAY_S = 3.0
 PIPELINE_NUM_MAX_CAPTURES = 10
+# all data saved under PIPELINE_DATA_SAVE_ROOT/PIPELINE_DATA_SAVE_SUB_PREFIX + $TIME_STAMP/*
+PIPELINE_DATA_SAVE_ROOT = 'data/'
+PIPELINE_DATA_SAVE_SUB_PREFIX = ''
 PIPELINE_IMAGE_ROOT = 'captures/'
 PIPELINE_JSON_ROOT = 'json/'
 PIPELINE_SAVE_PREFIX = 'jetson_capture_'
@@ -29,6 +32,7 @@ PIPELINE_TARGET_R_PATH = "targets/target_r.jpg"
 PIPELINE_TARGET_HELI_PATH = "targets/helipad.jpg"
 PIPELINE_IMAGE_COLOR = False
 PIPELINE_PICTURE_ONLY = False
+PIPELINE_SAVE_ROOT = None
 
 """
 Pipeline: (repeated every n seconds)
@@ -68,9 +72,9 @@ def save_json_data(json_path, image_path, image, metadata):
 
 def pipeline(iter_count, target_objs):
     print("Pipeline Iteration:", iter_count)
-    image_path = PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
-    json_path = PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
-    result_path = PIPELINE_RESULT_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
+    image_path = PIPELINE_SAVE_ROOT + PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
+    json_path = PIPELINE_SAVE_ROOT + PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
+    result_path = PIPELINE_SAVE_ROOT + PIPELINE_RESULT_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
     try:
         metadata = get_cam_metadata()
         image = take_picture()
@@ -106,6 +110,33 @@ def exceute_pipeline():
         ctr += 1
 
     interval_handler = SetInterval(float(PIPELINE_INTERVAL_DELAY_S), pipeline_handler)
+
+def get_current_datetime():
+    from datetime import datetime
+    now = datetime.now()
+    formatted_time = now.strftime("%y%m%d_%H%M%S")
+    return formatted_time
+
+def prepare_save_directory():
+    import os
+    directory = ''
+    directory += PIPELINE_DATA_SAVE_ROOT
+    directory += PIPELINE_DATA_SAVE_SUB_PREFIX
+    directory += get_current_datetime()
+    try:
+        os.mkdir(directory)
+        print(f"Directory '{directory}' created successfully.")
+    except Exception as err:
+        print("Exception occurred while trying to create directory:", err)
+        exit(1)
+    PIPELINE_SAVE_ROOT = directory
+    try:
+        os.mkdir(directory + "/" + PIPELINE_IMAGE_ROOT)
+        os.mkdir(directory + "/" + PIPELINE_JSON_ROOT)
+        os.mkdir(directory + "/" + PIPELINE_RESULT_ROOT)
+    except Exception as err:
+        print("Exception occurred while trying to create directory:", err)
+        exit(1)
 
 def clean():
     import os
@@ -145,4 +176,5 @@ if __name__ == "__main__":
     PIPELINE_IMAGE_COLOR = args.color
     PIPELINE_PICTURE_ONLY = args.picture_only
 
+    prepare_save_directory()
     exceute_pipeline()
