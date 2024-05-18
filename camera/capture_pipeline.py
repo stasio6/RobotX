@@ -20,6 +20,8 @@ PIPELINE_NUM_MAX_CAPTURES = 10
 PIPELINE_IMAGE_ROOT = 'captures/'
 PIPELINE_JSON_ROOT = 'json/'
 PIPELINE_SAVE_PREFIX = 'jetson_capture_'
+PIPELINE_PICKLE_ROOT = 'pickle/'
+PIPELINE_PICKLE_PATH_PREFIX = PIPELINE_PICKLE_ROOT + PIPELINE_SAVE_PREFIX
 PIPELINE_IMAGE_PATH_PREFIX = PIPELINE_IMAGE_ROOT + PIPELINE_SAVE_PREFIX
 PIPELINE_JSON_PATH_PREFIX = PIPELINE_JSON_ROOT + PIPELINE_SAVE_PREFIX
 PIPELINE_TARGET_N_PATH = "targets/target_n.jpg"
@@ -32,9 +34,13 @@ Pipeline: (repeated every n seconds)
     Capture Image + GPS -> (Image File path, GPS Returned)
     Detect Object with image file -> (Objects with detect and coords)
     Localisation Object -> (Returns Object + location)
-    Aggregate Results
-
+    Aggregate Results -> (Returns Object + location)
 """
+
+def save_capture_data(path, data):
+    import pickle
+    with open(path, "wb") as file:
+        pickle.dump(data, file)
 
 def get_cam_metadata():
     master = mavutil.mavlink_connection(PIXHAWK_URL, baud=57600)
@@ -60,15 +66,16 @@ def pipeline(iter_count, target_objs):
     print("Pipeline Iteration:", iter_count)
     image_path = PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
     json_path = PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
+    pkl_path = PIPELINE_PICKLE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.pkl'
     try:
         metadata = get_cam_metadata()
         image = take_picture()
         image_data = save_json_data(json_path, image_path, image, metadata)
         detected_objects = detect_all_targets(image_data, target_objs)
-#        draw_image_objects("test/full/img2.jpg", detected_objects)
         object_locations = localize_objects(metadata, detected_objects)
         print(object_locations)
-        results = aggregate_results(object_locations)
+        aggregate_data = aggregate_results(object_locations)
+        save_capture_data(pkl_path, aggregate_data)
     except Exception as error:
         print("Error in pipeline:", error)
 
