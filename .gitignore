@@ -1,3 +1,5 @@
 /docker/**
 **/__pycache__/**
 **.pyc
+/camera/captures/**
+/camera/json/**
