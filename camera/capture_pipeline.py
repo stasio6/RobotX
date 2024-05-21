@@ -33,6 +33,9 @@ PIPELINE_TARGET_HELI_PATH = "targets/helipad.jpg"
 PIPELINE_IMAGE_COLOR = False
 PIPELINE_PICTURE_ONLY = False
 PIPELINE_SAVE_ROOT = None
+# Testing variables
+PIPELINE_TEST_MODE = False
+PIPELINE_TEST_DIRECTORY = "test/drone/240518_153501"
 
 """
 Pipeline: (repeated every n seconds)
@@ -90,21 +93,48 @@ def save_json_data(json_path, image_path, image, metadata):
     json_data["image"] = image
     return json_data
 
+def read_test_data(iter_count):
+    def find_file(ending):
+        import os, re
+        import re
+        regex = re.compile('.*' + ending)
+        for root, dirs, files in os.walk(PIPELINE_TEST_DIRECTORY):
+            for file in files:
+                if regex.match(file):
+                    return file
+    image_path = PIPELINE_TEST_DIRECTORY + '/captures/' + find_file('{:05d}.jpg'.format(iter_count))
+    json_path = PIPELINE_TEST_DIRECTORY + '/json/' + find_file('{:05d}.json'.format(iter_count))
+    with open(json_path, "r") as json_file:
+        image_data = json.load(json_file)
+    print(image_data)
+    image_data["image"] = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    image_data["image_path"] = image_path
+    metadata = {
+        "gps_data": image_data["gps"],
+        "att_data": image_data["att"]
+    }
+    return metadata, image_data
+
 def pipeline(iter_count, target_objs):
     print("Capturing Picture:", iter_count)
     image_path = PIPELINE_SAVE_ROOT + "/" + PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
     json_path = PIPELINE_SAVE_ROOT + "/" +  PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
     result_path = PIPELINE_SAVE_ROOT + "/" + PIPELINE_RESULT_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
     try:
-        print("Getting Metadata")
-        metadata = get_cam_metadata()
-        print("Taking Picture")
-        image = take_picture()
-        print("Saving JSON data")
-        image_data = save_json_data(json_path, image_path, image, metadata)
+        if not PIPELINE_TEST_MODE:
+            print("Getting Metadata")
+            metadata = get_cam_metadata()
+            print("Taking Picture")
+            image = take_picture()
+            print("Saving JSON data")
+            image_data = save_json_data(json_path, image_path, image, metadata)
+        else:
+            metadata, image_data = read_test_data(iter_count)
         if not PIPELINE_PICTURE_ONLY:
             print("Live Detect Mode, detecting objects")
             detected_objects = detect_all_targets(image_data, target_objs)
+            if PIPELINE_TEST_MODE:
+                draw_image_objects(image_data["image_path"], detected_objects)
             print("Running Localisation")
             object_locations = localize_objects(metadata, detected_objects)
             print("Aggregating Results")
@@ -127,7 +157,7 @@ def exceute_pipeline():
     print("Preparing Target Images")
     target_objs = prepare_target_images(target_objs, calculate_key_descriptors)
     
-    print("Starting pipeline") 
+    print("Starting pipeline")
     def pipeline_handler():
         nonlocal ctr
         pipeline(ctr, target_objs)
@@ -190,6 +220,7 @@ if __name__ == "__main__":
     parser.add_argument('--color', type=bool, default=PIPELINE_IMAGE_COLOR, help='Color image')
     parser.add_argument('--clean', action='store_true', default=False, help='Clean up images and jsons')
     parser.add_argument('--picture-only', action='store_true', default=False, help='Only take pictures')
+    parser.add_argument('--test-mode', action='store_true', default=False, help='This mode makes pipeline read images from file, not take photos')
     args = parser.parse_args()
     if args.clean:
         clean()
@@ -202,6 +233,7 @@ if __name__ == "__main__":
     PIPELINE_TARGET_HELI_PATH = args.target_heli
     PIPELINE_IMAGE_COLOR = args.color
     PIPELINE_PICTURE_ONLY = args.picture_only
+    PIPELINE_TEST_MODE = args.test_mode
 
     prepare_save_directory()
     exceute_pipeline()
