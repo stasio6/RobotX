@@ -5,7 +5,7 @@ import json
 import cv2
 from object_detection import detect_all_targets, calculate_key_descriptors
 from cv_utilities import load_target_image, prepare_target_images, draw_image_objects
-from transformations import localize_objects
+from localization import localize_objects
 from aggregator import aggregate_results
 from pymavlink import mavutil
 from cam import SetInterval
