@@ -57,7 +57,7 @@ def read_test_data(iter_count, test_directory):
     json_path = test_directory + '/json/' + find_file('{:05d}.json'.format(iter_count))
     with open(json_path, "r") as json_file:
         image_data = json.load(json_file)
-    print(image_data)
+    # print(image_data)
     image_data["image"] = cv2.imread(image_path, cv2.IMREAD_COLOR)
     image_data["image_path"] = image_path
     metadata = {
@@ -68,6 +68,8 @@ def read_test_data(iter_count, test_directory):
 
 def serialize_keypoints(keypoints):
     res = []
+    # print(len(keypoints[0]))
+    # print(len(keypoints[1]))
     for point, desc in zip(keypoints[0], keypoints[1]):
         res.append((point.pt, point.size, point.angle, point.response, point.octave, point.class_id, desc))
     return res
@@ -83,12 +85,15 @@ def deserialize_keypoints(keypoints):
 
 def save_target_images_pickle(path, images):
     for image in images:
-        image["descriptors"] = serialize_keypoints(image["descriptors"])
+        image["save_descriptors"] = serialize_keypoints(image["descriptors"])
+    temp = image["descriptors"]
+    image["descriptors"] = None
     with open(path, "wb") as file:
         pickle.dump(images, file)
+    image["descriptors"] = temp
 
 def load_target_images_pickle(path):
     with open(path, "rb") as file:
         images = pickle.load(file)
     for image in images:
-        image["descriptors"] = deserialize_keypoints(image["descriptors"])
+        image["descriptors"] = deserialize_keypoints(image["save_descriptors"])

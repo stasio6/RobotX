@@ -4,8 +4,12 @@ from file_utils import load_target_images_pickle, save_target_images_pickle
 from calibrate_camera import undistort_image
 
 TARGET_IMAGE_SIZES = (800, 800) # TODO: Tune
-TARGET_IMAGES_LOAD_FROM_FILE = False # TODO: Fix True, currently not working
+TARGET_IMAGES_LOAD_FROM_FILE = True # TODO: Fix False, currently not working
 TARGET_IMAGES_PICKLE_PATH = "target_images.pkl"
+CV_NUMBER_CORNERS_DETECTED = 1000
+CV_CORNERS_QUALITY_LEVEL = 0.01
+CV_CORNERS_MIN_DISTANCE = 30
+CV_CORNERS_MATCHING_MAX_DISTANCE = 30
 
 def load_target_image(path):
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE) # TODO: Don't read it from file
@@ -25,14 +29,14 @@ def prepare_target_images(target_images, calculate_key_descriptors):
             image = load_target_image(target_image["path"])
             target_image["descriptors"] = calculate_key_descriptors(image)
             target_image["image_shape"] = image.shape
-        save_target_images_pickle(TARGET_IMAGES_PICKLE_PATH, target_images)
+        # save_target_images_pickle(TARGET_IMAGES_PICKLE_PATH, target_images) # TODO: Doesn't work
     else:
         target_images = load_target_images_pickle(TARGET_IMAGES_PICKLE_PATH)
     return target_images
 
 def get_corners(img, camera_image_path=None):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    corners = cv2.goodFeaturesToTrack(img, 800, 0.01, 30)
+    corners = cv2.goodFeaturesToTrack(img, CV_NUMBER_CORNERS_DETECTED, CV_CORNERS_QUALITY_LEVEL, CV_CORNERS_MIN_DISTANCE)
     corners = corners_to_subpix2(img, corners)
     # draw_image_corners(img, corners)
 
@@ -45,7 +49,7 @@ def corners_to_subpix2(img, corners):
 
 def get_closest_corners(img, targets, corners):
     res = []
-    max_dist = 30
+    max_dist = CV_CORNERS_MATCHING_MAX_DISTANCE
     for t in targets:
         best = (max_dist, t)
         for c in corners:

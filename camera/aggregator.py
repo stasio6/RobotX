@@ -2,7 +2,7 @@ from collections import defaultdict
 import numpy as np
 from gps_utils import calculate_distance
 
-AGGREGATOR_RANSAC_TOLERANCE = 10
+AGGREGATOR_RANSAC_TOLERANCE = 15
 
 locations = defaultdict(list)
 
@@ -30,6 +30,6 @@ def aggregate_results(detected_objects):
         if len(locations[name]) > 0:
             inliers = RANSAC(locations[name])
             mean = np.mean(np.array(inliers), axis=0)
-            results[name] = mean
+            results[name] = {"result": mean, "inliers": len(inliers)}
             # print(name, ' '.join(["%.2f" % s for s in mean]))
     return results

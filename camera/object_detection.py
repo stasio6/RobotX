@@ -1,8 +1,13 @@
 import cv2
 import numpy as np
 import sys
-from cv_utilities import get_closest_corners, get_corners, draw_image_corners, load_camera_image
-from utils import time_elapsed
+from cv_utilities import get_closest_corners, get_corners
+from cv_debugging import draw_image_corners
+from time_utils import time_elapsed
+
+CV_GOOD_MATCHES_NEEDED = 20
+CV_CORNER_MATCH_UNIQUENESS = 0.80
+CV_USE_DENOISING = False # Turns out denoising makes results worse
 
 sift = cv2.SIFT_create()
 
@@ -18,7 +23,8 @@ def detect_all_targets(image_data, target_objs):
     ##### NEW CODE 
     camera_image = image_data["image"]
     # time_elapsed("Image loaded")
-    camera_image = denoise_image(camera_image)
+    if CV_USE_DENOISING:
+        camera_image = denoise_image(camera_image)
     # time_elapsed("Image denoised")
     subpixel_corners = get_corners(camera_image)
     camera_image_kd = calculate_key_descriptors(camera_image)
@@ -28,7 +34,7 @@ def detect_all_targets(image_data, target_objs):
     res_all = []
     for target_obj in target_objs:
         try:
-            found, corners = detect_object_sift(target_obj["descriptors"], camera_image_kd, target_obj["image"].shape)
+            found, corners = detect_object_sift(target_obj["descriptors"], camera_image_kd, target_obj["image_shape"])
             precise_corners = get_closest_corners(camera_image, corners, subpixel_corners)
         except:
             found = False
@@ -64,12 +70,12 @@ def detect_object_sift(target_image_kd, camera_image_kd, target_image_shape):
     # Apply ratio test to filter good matches
     good_matches = []
     for m, n in matches:
-        if m.distance < 0.80 * n.distance:
+        if m.distance < CV_CORNER_MATCH_UNIQUENESS * n.distance:
             good_matches.append(m)
 
     # print(len(good_matches))
     # Check if a reasonable match found
-    if len(good_matches) < 20:
+    if len(good_matches) < CV_GOOD_MATCHES_NEEDED:
         return False, []
 
     # Extract location of good matches
