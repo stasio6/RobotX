@@ -32,7 +32,7 @@ PIPELINE_TARGET_R_PATH = "targets/target_r.jpg"
 PIPELINE_TARGET_HELI_PATH = "targets/helipad.jpg"
 PIPELINE_IMAGE_COLOR = False
 PIPELINE_PICTURE_ONLY = False
-PIPELINE_SAVE_ROOT = None
+PIPELINE_SAVE_ROOT = ""
 # Testing variables
 PIPELINE_TEST_MODE = False
 PIPELINE_TEST_DIRECTORY = "test/drone/240518_153501"
@@ -130,6 +130,7 @@ def pipeline(iter_count, target_objs):
             image_data = save_json_data(json_path, image_path, image, metadata)
         else:
             metadata, image_data = read_test_data(iter_count)
+
         if not PIPELINE_PICTURE_ONLY:
             print("Live Detect Mode, detecting objects")
             detected_objects = detect_all_targets(image_data, target_objs)
@@ -140,7 +141,10 @@ def pipeline(iter_count, target_objs):
             print("Aggregating Results")
             aggregate_data = aggregate_results(object_locations)
             print("Saving capture data")
-            save_capture_data(result_path, object_locations, aggregate_data)
+            if PIPELINE_TEST_MODE:
+                print("Results:\n", object_locations, "\n", aggregate_data)
+            else:
+                save_capture_data(result_path, object_locations, aggregate_data)
     except Exception as error:
         print("Error in pipeline:", error)
 
@@ -235,5 +239,6 @@ if __name__ == "__main__":
     PIPELINE_PICTURE_ONLY = args.picture_only
     PIPELINE_TEST_MODE = args.test_mode
 
-    prepare_save_directory()
+    if not PIPELINE_TEST_MODE:
+        prepare_save_directory()
     exceute_pipeline()
