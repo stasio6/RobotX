@@ -1,10 +1,16 @@
 import cv2
 import numpy as np
+from file_utils import load_target_images_pickle, save_target_images_pickle
 from calibrate_camera import undistort_image
+
+TARGET_IMAGE_SIZES = (800, 800) # TODO: Tune
+TARGET_IMAGES_LOAD_FROM_FILE = False # TODO: Fix True, currently not working
+TARGET_IMAGES_PICKLE_PATH = "target_images.pkl"
 
 def load_target_image(path):
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE) # TODO: Don't read it from file
-    img = cv2.resize(img, (800, 800)) # TODO: Maybe remove the resizing?
+    if TARGET_IMAGE_SIZES is not None:
+        img = cv2.resize(img, TARGET_IMAGE_SIZES) # TODO: Maybe remove the resizing?
     return img
 
 def load_camera_image(path, useColor=False):
@@ -14,17 +20,17 @@ def load_camera_image(path, useColor=False):
     return camera_image
 
 def prepare_target_images(target_images, calculate_key_descriptors):
-    for target_image in target_images:
-        target_image["image"] = load_target_image(target_image["path"])
-        target_image["descriptors"] = calculate_key_descriptors(target_image["image"])
+    if TARGET_IMAGES_LOAD_FROM_FILE:
+        for target_image in target_images:
+            image = load_target_image(target_image["path"])
+            target_image["descriptors"] = calculate_key_descriptors(image)
+            target_image["image_shape"] = image.shape
+        save_target_images_pickle(TARGET_IMAGES_PICKLE_PATH, target_images)
+    else:
+        target_images = load_target_images_pickle(TARGET_IMAGES_PICKLE_PATH)
     return target_images
 
 def get_corners(img, camera_image_path=None):
-    # print(img)
-    # cv2.imshow("Shapes", cv2.resize(img, (800, 600)))
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     corners = cv2.goodFeaturesToTrack(img, 800, 0.01, 30)
     corners = corners_to_subpix2(img, corners)
@@ -47,38 +53,4 @@ def get_closest_corners(img, targets, corners):
                 best = (np.linalg.norm(c - t), c[0])
         res.append(best[1])
     return res
-
-def draw_image_objects(img_path, results):
-    color_img = load_camera_image(img_path, True)
-    for r in results:
-        if not r['found']:
-            continue
-        corners = r['corners']
-        num = 0
-        for c in corners:
-            color_img = cv2.circle(color_img, (int(c[0]), int(c[1])), radius=5, color=(0, 0, 255), thickness=-5)
-            cv2.putText(color_img, str(num), (int(c[0]), int(c[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
-            num += 1
-        color_img = cv2.polylines(color_img, [np.array(corners, dtype=int).reshape((-1, 1, 2))], isClosed=True, color=(255, 0, 0), thickness=1)
-        cv2.putText(color_img, r['name'], (int(corners[0][0]), int(corners[0][1])), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
-
-    cv2.imshow("Result", cv2.resize(color_img, (800, 600)))
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-def draw_image_corners(img, corners):
-    import copy
-    img = copy.copy(img)
-    # color_img = load_camera_image(img_path, True)
-    for c in corners:
-        import collections
-        if isinstance([1, 2, 3], (collections.abc.Sequence, np.ndarray)):
-            c = c[0]
-        img = cv2.circle(img, (int(c[0]), int(c[1])), radius=5, color=(0, 0, 255), thickness=-5)
-    # color_img = cv2.polylines(color_img, [np.array(corners, dtype=int).reshape((-1, 1, 2))], isClosed=True, color=(255, 0, 0), thickness=1)
-    # cv2.putText(color_img, r['name'], (int(corners[0][0]), int(corners[0][1])), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-    cv2.imshow("Result", cv2.resize(img, (800, 600)))
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 

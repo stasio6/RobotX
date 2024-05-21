@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 
-import time
-import json
 import cv2
 from object_detection import detect_all_targets, calculate_key_descriptors
-from cv_utilities import load_target_image, prepare_target_images, draw_image_objects
+from cv_utilities import load_target_image, prepare_target_images
+from cv_debugging import draw_image_objects
 from localization import localize_objects
 from aggregator import aggregate_results
+from file_utils import save_capture_data, save_json_data, read_test_data
+from time_utils import get_current_datetime
 from pymavlink import mavutil
 from cam import SetInterval
 from cam import capture_image as take_picture 
@@ -45,81 +46,16 @@ Pipeline: (repeated every n seconds)
     Aggregate Results -> (Returns Object + location)
 """
 
-def unndarray(d):
-  import numpy as np
-  if isinstance(d, np.generic):
-    return float(d)
-  if isinstance(d, np.ndarray):
-    d = list(d)
-  if isinstance(d, list):
-    res = []
-    for i in range(len(d)):
-      res.append(unndarray(d[i]))
-    return res
-  if not isinstance(d, dict):
-    return d
-  for key in d:
-    d[key] = unndarray(d[key])    
-  return d
-
-def save_capture_data(json_path, localization_data, aggregation_data):
-    json_data = {
-        "localization": localization_data,
-        "aggregation": aggregation_data
-    }
-    json_data = unndarray(json_data)
-    with open(json_path, "w") as json_file:
-        json.dump(json_data, json_file)
-
 def get_cam_metadata():
     master = mavutil.mavlink_connection(PIXHAWK_URL, baud=57600)
     metadata = get_pixhawk_data(master)
     return metadata
 
-def save_json_data(json_path, image_path, image, metadata):
-    json_data = {
-            "path": image_path, 
-            "gps": metadata["gps_data"],
-            "imu": metadata["imu_data"],
-            "att": metadata["att_data"],
-        }
-    print("Saving image to path:", image_path)
-    if image is None:
-        print("IMG NONE")
-    cv2.imwrite(image_path, image)
-    print("Saving JSON to path:", json_path)
-    with open(json_path, "w") as json_file:
-        json.dump(json_data, json_file)
-    json_data["image"] = image
-    return json_data
-
-def read_test_data(iter_count):
-    def find_file(ending):
-        import os, re
-        import re
-        regex = re.compile('.*' + ending)
-        for root, dirs, files in os.walk(PIPELINE_TEST_DIRECTORY):
-            for file in files:
-                if regex.match(file):
-                    return file
-    image_path = PIPELINE_TEST_DIRECTORY + '/captures/' + find_file('{:05d}.jpg'.format(iter_count))
-    json_path = PIPELINE_TEST_DIRECTORY + '/json/' + find_file('{:05d}.json'.format(iter_count))
-    with open(json_path, "r") as json_file:
-        image_data = json.load(json_file)
-    print(image_data)
-    image_data["image"] = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    image_data["image_path"] = image_path
-    metadata = {
-        "gps_data": image_data["gps"],
-        "att_data": image_data["att"]
-    }
-    return metadata, image_data
-
 def pipeline(iter_count, target_objs):
     print("Capturing Picture:", iter_count)
-    image_path = PIPELINE_SAVE_ROOT + "/" + PIPELINE_IMAGE_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.jpg'
-    json_path = PIPELINE_SAVE_ROOT + "/" +  PIPELINE_JSON_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
-    result_path = PIPELINE_SAVE_ROOT + "/" + PIPELINE_RESULT_PATH_PREFIX + str(int(time.time())) + "_" + '{:05d}'.format(iter_count) + '.json'
+    image_path = PIPELINE_SAVE_ROOT + "/" + PIPELINE_IMAGE_PATH_PREFIX + '{:05d}'.format(iter_count) + '.jpg'
+    json_path = PIPELINE_SAVE_ROOT + "/" +  PIPELINE_JSON_PATH_PREFIX + '{:05d}'.format(iter_count) + '.json'
+    result_path = PIPELINE_SAVE_ROOT + "/" + PIPELINE_RESULT_PATH_PREFIX + '{:05d}'.format(iter_count) + '.json'
     try:
         if not PIPELINE_TEST_MODE:
             print("Getting Metadata")
@@ -129,7 +65,7 @@ def pipeline(iter_count, target_objs):
             print("Saving JSON data")
             image_data = save_json_data(json_path, image_path, image, metadata)
         else:
-            metadata, image_data = read_test_data(iter_count)
+            metadata, image_data = read_test_data(iter_count, PIPELINE_TEST_DIRECTORY)
 
         if not PIPELINE_PICTURE_ONLY:
             print("Live Detect Mode, detecting objects")
@@ -170,12 +106,6 @@ def exceute_pipeline():
         ctr += 1
 
     interval_handler = SetInterval(float(PIPELINE_INTERVAL_DELAY_S), pipeline_handler)
-
-def get_current_datetime():
-    from datetime import datetime
-    now = datetime.now()
-    formatted_time = now.strftime("%y%m%d_%H%M%S")
-    return formatted_time
 
 def prepare_save_directory():
     import os
