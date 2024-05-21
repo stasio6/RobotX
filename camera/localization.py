@@ -4,6 +4,8 @@ from calibrate_camera import load_coefficients
 from scipy.spatial.transform import Rotation
 from gps_utils import add_distance_to_coordinates
 
+DEFAULT_OBJECT_SIZE = 150
+
 def get_relative_camera_pose(corners, square):
     camera_matrix, dist_matrix = load_coefficients()
     success, rvec, tvec = cv2.solvePnP(np.array(square), np.array(corners), camera_matrix, dist_matrix, flags=cv2.SOLVEPNP_IPPE_SQUARE)
@@ -34,7 +36,7 @@ def get_camera_R(imu):
 def parse_gps(gps):
     return gps["lat"], gps["lon"], gps["alt"]
 
-def get_img_center(corners, lat, lon, alt, cam_R, object_side=150):
+def get_img_center(corners, lat, lon, alt, cam_R, object_side=DEFAULT_OBJECT_SIZE):
     hl = object_side/2
     square = [[-hl, hl, 0], [hl, hl, 0], [hl, -hl, 0], [-hl, -hl, 0]]
 
@@ -48,8 +50,8 @@ def get_img_center(corners, lat, lon, alt, cam_R, object_side=150):
     # TODO: Take into account camera-GPS offset
     # lon += middle[0] # TODO: Use gps add
     # lat -= middle[1] # TODO: Use gps add
-    lat, lon = add_distance_to_coordinates(lat, lon, middle[0], middle[1])
-    alt -= middle[2]
+    lat, lon = add_distance_to_coordinates(lat, lon, middle[0]/100, middle[1]/100)
+    alt -= middle[2]/1000
     return (lat, lon, alt)
 
 def localize_objects(metadata, detected_objects):
@@ -61,5 +63,6 @@ def localize_objects(metadata, detected_objects):
         try:
             detected_object["real_world_pos"] = get_img_center(detected_object["corners"], lat, lon, alt, cam_R)
         except:
+            detected_object["found"] = False
             print("Object localization failed - invalid object detected")
     return detected_objects
