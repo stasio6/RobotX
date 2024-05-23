@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "robotx"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8,<3.9"
+opencv-python = "^4.9.0.80"
+scipy = "<1.13.0"
+pymavlink = "^2.4.41"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
