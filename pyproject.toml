@@ -4,12 +4,14 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.8,<3.9"
 opencv-python = "^4.9.0.80"
 scipy = "<1.13.0"
 pymavlink = "^2.4.41"
+pyserial = "^3.5"
 
 
 [build-system]

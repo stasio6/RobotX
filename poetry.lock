@@ -245,6 +245,20 @@ future = "*"
 lxml = "*"
 
 [[package]]
+name = "pyserial"
+version = "3.5"
+description = "Python Serial Port Extension"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyserial-3.5-py2.py3-none-any.whl", hash = "sha256:c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0"},
+    {file = "pyserial-3.5.tar.gz", hash = "sha256:3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb"},
+]
+
+[package.extras]
+cp2110 = ["hidapi"]
+
+[[package]]
 name = "scipy"
 version = "1.10.1"
 description = "Fundamental algorithms for scientific computing in Python"
@@ -285,4 +299,4 @@ test = ["asv", "gmpy2", "mpmath", "pooch", "pytest", "pytest-cov", "pytest-timeo
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.9"
-content-hash = "d01b058df6fc4624495c69cf0f8c8f9c219a57a4cb3b4625c52f6b94be4a386b"
+content-hash = "9c2765ba0cfb90b49dc91fe8f73a0e22fa37819aae070d3349cddfce0151b2c5"
