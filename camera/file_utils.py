@@ -32,9 +32,9 @@ def save_capture_data(json_path, localization_data, aggregation_data):
 def save_json_data(json_path, image_path, image, metadata):
     json_data = {
             "path": image_path, 
-            "gps": metadata["gps_data"],
-            "imu": metadata["imu_data"],
-            "att": metadata["att_data"],
+            "gps": metadata["gps"],
+            "imu": metadata["imu"],
+            "att": metadata["attitude"],
         }
     print("Saving image to path:", image_path)
     if image is None:

@@ -1,9 +1,11 @@
 from pymavlink import mavutil
+import time
 
 SERIAL_PORT = "/dev/ttyTHS1"
 USB_PORT = "/dev/ttyACM0"
 DEFAULT_BAUD_RATE = 57600
 MSG_FREQ_HZ = 20
+# MSG_FREQ_HZ = 50
 
 class Autopilot:
     def __init__(self, connection_url, baudrate):
@@ -19,7 +21,6 @@ class Autopilot:
         self.conn = conn
 
     def set_message_frequency(self):
-
         # We need to get GPS, IMU and Attitude data
         msg_ids = [
             mavutil.mavlink.MAVLINK_MSG_ID_GLOBAL_POSITION_INT,
@@ -53,5 +54,11 @@ class Autopilot:
         
 if __name__ == "__main__":
     autopilot = Autopilot(SERIAL_PORT, DEFAULT_BAUD_RATE)
-    data = autopilot.get_data()
-    print(data)
+    # autopilot = Autopilot(USB_PORT, DEFAULT_BAUD_RATE)
+    while True:
+        # start = time.time()
+        data = autopilot.get_data()
+        # end = time.time()
+        # print(end - start)
+        print(data)
+        time.sleep(1)

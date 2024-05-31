@@ -3,3 +3,4 @@
 **.pyc
 /camera/captures/**
 /camera/json/**
+/camera/data/

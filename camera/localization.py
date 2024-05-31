@@ -55,8 +55,8 @@ def get_img_center(corners, lat, lon, alt, cam_R, object_side=DEFAULT_OBJECT_SIZ
     return (lat, lon, alt)
 
 def localize_objects(metadata, detected_objects):
-    lat, lon, alt = parse_gps(metadata["gps_data"])
-    cam_R = get_camera_R(metadata["att_data"])
+    lat, lon, alt = parse_gps(metadata["gps"])
+    cam_R = get_camera_R(metadata["attitude"])
     for detected_object in detected_objects:
         if not detected_object["found"]:
             continue

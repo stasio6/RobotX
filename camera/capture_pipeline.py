@@ -12,6 +12,7 @@ from pymavlink import mavutil
 from cam import SetInterval
 from cam import capture_image as take_picture 
 from pixhawk_utils import get_pixhawk_data
+import autopilot as ap
 
 PIXHAWK_URL = "/dev/ttyTHS1"
 
@@ -52,6 +53,8 @@ def get_cam_metadata():
     return metadata
 
 def pipeline(iter_count, target_objs):
+    apm = ap.Autopilot(ap.SERIAL_PORT, ap.DEFAULT_BAUD_RATE)
+
     print("Capturing Picture:", iter_count)
     image_path = PIPELINE_SAVE_ROOT + "/" + PIPELINE_IMAGE_PATH_PREFIX + '{:05d}'.format(iter_count) + '.jpg'
     json_path = PIPELINE_SAVE_ROOT + "/" +  PIPELINE_JSON_PATH_PREFIX + '{:05d}'.format(iter_count) + '.json'
@@ -59,7 +62,8 @@ def pipeline(iter_count, target_objs):
     try:
         if not PIPELINE_TEST_MODE:
             print("Getting Metadata")
-            metadata = get_cam_metadata()
+            # metadata = get_cam_metadata()
+            metadata = apm.get_data()
             print("Taking Picture")
             image = take_picture()
             print("Saving JSON data")
