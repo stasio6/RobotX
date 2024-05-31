@@ -97,3 +97,11 @@ def load_target_images_pickle(path):
         images = pickle.load(file)
     for image in images:
         image["descriptors"] = deserialize_keypoints(image["save_descriptors"])
+
+def clear_dir(dir_path):
+    for filename in os.listdir(dir_path):
+        file_path = os.path.join(dir_path, filename)
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            print(f"Failed to delete: {e}")
