@@ -10,7 +10,8 @@ def time_elapsed(name, printout=True):
         print()
     start_time = datetime.now()
 
-def get_current_datetime():
-    now = datetime.now()
-    formatted_time = now.strftime("%y%m%d_%H%M%S")
-    return formatted_time
+def get_timestamp(millis=False):
+    if not millis:
+        return datetime.now().strftime("%y%m%d_%H%M%S")
+    else:
+        return datetime.now().strftime("%y%m%d_%H%M%S_%f")[:-3]

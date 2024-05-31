@@ -1,20 +1,16 @@
 #!/usr/bin/python3
 
-import cv2
 from object_detection import detect_all_targets, calculate_key_descriptors
 from cv_utilities import load_target_image, prepare_target_images
 from cv_debugging import draw_image_objects
 from localization import localize_objects
 from aggregator import aggregate_results
 from file_utils import save_capture_data, save_json_data, read_test_data
-from time_utils import get_current_datetime
+from time_utils import get_timestamp
 from pymavlink import mavutil
 from cam import SetInterval
 from cam import capture_image as take_picture 
-from pixhawk_utils import get_pixhawk_data
 import autopilot as ap
-
-PIXHAWK_URL = "/dev/ttyTHS1"
 
 PIPELINE_STARTUP_DELAY_S = 10.0
 PIPELINE_INTERVAL_DELAY_S = 3.0
@@ -46,11 +42,6 @@ Pipeline: (repeated every n seconds)
     Localisation Object -> (Returns Object + location)
     Aggregate Results -> (Returns Object + location)
 """
-
-def get_cam_metadata():
-    master = mavutil.mavlink_connection(PIXHAWK_URL, baud=57600)
-    metadata = get_pixhawk_data(master)
-    return metadata
 
 def pipeline(iter_count, target_objs):
     apm = ap.Autopilot(ap.SERIAL_PORT, ap.DEFAULT_BAUD_RATE)
@@ -116,7 +107,7 @@ def prepare_save_directory():
     directory = ''
     directory += PIPELINE_DATA_SAVE_ROOT
     directory += PIPELINE_DATA_SAVE_SUB_PREFIX
-    directory += get_current_datetime()
+    directory += get_timestamp()
     try:
         os.mkdir(directory)
         print(f"Directory '{directory}' created successfully.")
