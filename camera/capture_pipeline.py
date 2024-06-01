@@ -151,12 +151,15 @@ if __name__ == "__main__":
     parser.add_argument('--target-r', type=str, default=PIPELINE_TARGET_R_PATH, help='Target R path')
     parser.add_argument('--target-heli', type=str, default=PIPELINE_TARGET_HELI_PATH, help='Target Helipad path')
     parser.add_argument('--color', type=bool, default=PIPELINE_IMAGE_COLOR, help='Color image')
+    parser.add_argument('--pixhawk-url', type=str, default=PIXHAWK_URL, help='Pixhawk URL')
     parser.add_argument('--clean', action='store_true', default=False, help='Clean up images and jsons')
     parser.add_argument('--picture-only', action='store_true', default=False, help='Only take pictures')
     parser.add_argument('--test-mode', action='store_true', default=False, help='This mode makes pipeline read images from file, not take photos')
     args = parser.parse_args()
     if args.clean:
         clean()
+    
+    PIXHAWK_URL = args.pixhawk_url
     PIPELINE_INTERVAL_DELAY_S = args.interval
     PIPELINE_NUM_MAX_CAPTURES = args.num_captures
     PIPELINE_IMAGE_PATH_PREFIX = args.image_root
