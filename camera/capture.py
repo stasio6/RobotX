@@ -8,8 +8,8 @@ import json
 import file_utils
 
 class SensorReader():
-    def __init__(self, read_freq):
-        self.read_freq = read_freq
+    def __init__(self, save_dir):
+        self.save_dir = save_dir
         self.init_sensors() 
 
     def init_sensors(self):
@@ -25,23 +25,23 @@ class SensorReader():
         self.apm = ap.Autopilot(ap.SERIAL_PORT, ap.DEFAULT_BAUD_RATE)
         self.latest_sensors = None
 
-    def read_sensors(self, output_dir):
+    def read_sensors(self):
         timestamp = time_utils.get_timestamp(millis=True)
         ret, image = self.camera.read() 
         if not ret:
             image = None
         ap_data = self.apm.get_data() 
 
-        image_path = os.path.join(output_dir, f"{timestamp}_cam.jpg")
+        image_path = os.path.join(self.save_dir, f"{timestamp}_cam.jpg")
         self.latest_image = image
         cv2.imwrite(image_path, image)
 
-        sensor_data_path = os.path.join(output_dir, f"{timestamp}_sensors.json")
+        sensor_data_path = os.path.join(self.save_dir, f"{timestamp}_sensors.json")
         sensor_data = {
             "image_path": image_path,
             "gps": ap_data["gps"],
             "imu": ap_data["imu"],
-            "att": ap_data["attitude"]
+            "attitude": ap_data["attitude"]
         }
         self.latest_sensors = sensor_data
         with open(sensor_data_path, "w") as f:
@@ -54,22 +54,8 @@ class SensorReader():
         return self.latest_sensors, self.latest_image
 
     def read_fixed(self, n, interval):
-        dir = "temp" 
-        # timestamp = time_utils.get_timestamp()
-        # dir = f"data/data_{timestamp}/"
-
-        os.makedirs(dir, exist_ok=True)
-        file_utils.clear_dir(dir)
-        
         for i in range(n):
-            # start = time.time()
-            self.read_sensors(dir)
-            # end = time.time()
-            # elapsed = end - start
-            # if elapsed < interval:
-            #     time.sleep(interval - elapsed)
-            # else:
-            #     print(f"{i}: cap is taking {elapsed} > {interval}")
+            self.read_sensors()
             
 def test_image_load():
     start = time.time()
@@ -80,7 +66,8 @@ def test_image_load():
     print(img.shape)
 
 if __name__ == "__main__":
-    reader = SensorReader(10)
+    save_dir = file_utils.new_save_dir()
+    reader = SensorReader(save_dir)
 
     # n = 60
     # interval = .05

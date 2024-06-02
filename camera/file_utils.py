@@ -3,6 +3,7 @@ import os, re
 import pickle
 import json
 import cv2
+import time_utils
 
 def unndarray(d):
   if isinstance(d, np.generic):
@@ -34,7 +35,7 @@ def save_json_data(json_path, image_path, image, metadata):
             "path": image_path, 
             "gps": metadata["gps"],
             "imu": metadata["imu"],
-            "att": metadata["attitude"],
+            "attitude": metadata["attitude"],
         }
     print("Saving image to path:", image_path)
     if image is None:
@@ -62,7 +63,7 @@ def read_test_data(iter_count, test_directory):
     image_data["image_path"] = image_path
     metadata = {
         "gps_data": image_data["gps"],
-        "att_data": image_data["att"]
+        "att_data": image_data["attitude"]
     }
     return metadata, image_data
 
@@ -105,3 +106,11 @@ def clear_dir(dir_path):
             os.remove(file_path)
         except Exception as e:
             print(f"Failed to delete: {e}")
+
+def new_save_dir():
+    timestamp = time_utils.get_timestamp()
+    dir = f"data/data_{timestamp}"
+
+    os.makedirs(dir, exist_ok=True)
+    clear_dir(dir)
+    return dir

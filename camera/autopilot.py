@@ -16,6 +16,9 @@ class Autopilot:
 
     def init_connection(self):
         conn = mavutil.mavlink_connection(self.connection_url, baud=self.baudrate)
+        
+        conn.mav.heartbeat_send(0, 0, 0, 0, 0)
+        print(f"Waiting from heartbeat from {self.connection_url}")
         conn.wait_heartbeat()
         print(f"Heartbeat from system (system {conn.target_system}, component {conn.target_component})")
         self.conn = conn
