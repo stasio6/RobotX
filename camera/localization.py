@@ -12,25 +12,13 @@ def get_relative_camera_pose(corners, square):
     if not success:
         raise Exception("PnP not successful")
 
-    R = cv2.Rodrigues(rvec)[0]
-    tvec = tvec.reshape(-1)
-    # print("Relative camera pos", tvec)
-    # print("Relative rot", Rotation.from_matrix(R).as_euler('XYZ', degrees=True)) # Correct
-
-    middle = [tvec[0], -tvec[1], -tvec[2]]
-    # print("Rel middle", middle)
-    middle = middle @ np.linalg.inv(R)
-    # print("Rel rotated middle", middle)
-    return middle
+    # R = cv2.Rodrigues(rvec)[0]
+    return tvec.reshape(-1)
 
 def get_camera_R(imu):
     roll = imu["roll"]
     pitch = imu["pitch"]
     yaw = imu["yaw"]
-    # yaw = 0 # TODO: Remove this line, it's just for testing
-    # print("roll:", roll, "pitch:", pitch, "yaw:", yaw)
-    # print(Rotation.from_euler("XYZ", (roll, pitch, yaw), degrees=False).as_matrix())
-    # print("\n")
     return Rotation.from_euler("XYZ", (roll, pitch, yaw), degrees=False).as_matrix()
 
 def parse_gps(gps):
@@ -41,16 +29,9 @@ def get_img_center(corners, lat, lon, alt, cam_R, object_side=DEFAULT_OBJECT_SIZ
     square = [[-hl, hl, 0], [hl, hl, 0], [hl, -hl, 0], [-hl, -hl, 0]]
 
     middle = get_relative_camera_pose(corners, square)
-    # print("mid:", middle)
-    # print("cam_R", cam_R)
-    middle = middle @ cam_R
-    # print("result:", middle)
-    # return middle # TODO: Remove
+    middle = cam_R @ middle
 
-    # TODO: Take into account camera-GPS offset
-    # lon += middle[0] # TODO: Use gps add
-    # lat -= middle[1] # TODO: Use gps add
-    lat, lon = add_distance_to_coordinates(lat, lon, middle[0]/100, middle[1]/100)
+    lat, lon = add_distance_to_coordinates(lat, lon, -middle[1]/100, middle[0]/100)
     alt -= middle[2]/1000
     return (lat, lon, alt)
 

@@ -1,13 +1,15 @@
 import cv2
 import numpy as np
 import sys
-from cv_utilities import get_closest_corners, get_corners
+from cv_utilities import get_closest_corners, detect_optimal_corners, detect_polygon_corners, normalize_corners
 from cv_debugging import draw_image_corners
 from time_utils import time_elapsed
 
 CV_GOOD_MATCHES_NEEDED = 20
 CV_CORNER_MATCH_UNIQUENESS = 0.80
 CV_USE_DENOISING = False # Turns out denoising makes results worse
+CV_USE_OPTIMAL_CORNERS = True
+CV_USE_POLYGON_CORNERS = True
 
 sift = cv2.SIFT_create()
 
@@ -26,16 +28,22 @@ def detect_all_targets(image_data, target_objs):
     if CV_USE_DENOISING:
         camera_image = denoise_image(camera_image)
     # time_elapsed("Image denoised")
-    subpixel_corners = get_corners(camera_image)
+    assert CV_USE_OPTIMAL_CORNERS or CV_USE_POLYGON_CORNERS
+    if CV_USE_POLYGON_CORNERS and CV_USE_OPTIMAL_CORNERS:
+        detected_corners = get_closest_corners(detect_polygon_corners(camera_image), detect_optimal_corners(camera_image), 5)
+    elif CV_USE_OPTIMAL_CORNERS:
+        detected_corners = detect_optimal_corners(camera_image)
+    else:
+        detected_corners = detect_polygon_corners(camera_image)
     camera_image_kd = calculate_key_descriptors(camera_image)
     # time_elapsed("Preprocessing")
-    # draw_image_corners(camera_image, subpixel_corners)
+    # draw_image_corners(camera_image, detect_polygon_corners(camera_image), detect_optimal_corners(camera_image), detected_corners)
 
     res_all = []
     for target_obj in target_objs:
         try:
             found, corners = detect_object_sift(target_obj["descriptors"], camera_image_kd, target_obj["image_shape"])
-            precise_corners = get_closest_corners(camera_image, corners, subpixel_corners)
+            precise_corners = get_closest_corners(corners, detected_corners)
         except:
             found = False
             precise_corners = []
@@ -91,20 +99,7 @@ def detect_object_sift(target_image_kd, camera_image_kd, target_image_shape):
     # Transform the corners using the homography
     camera_corners = cv2.perspectiveTransform(target_corners, homography)
 
-    corners = []
-    for c in camera_corners:
-        corners.append(c[0])
+    corners = normalize_corners(camera_corners)
     corners.reverse()
 
     return True, corners
-
-    # Draw the matched region on the camera image
-    # result_image = cv2.cvtColor(camera_image, cv2.COLOR_GRAY2BGR)
-    # camera_corners = camera_corners.reshape(-1, 2)
-    # pts = np.int32(camera_corners).reshape((-1, 1, 2))
-    # cv2.polylines(result_image, [pts], True, (0, 255, 0), 2, cv2.LINE_AA)
-
-    # # Display the result
-    # cv2.imshow("Result", result_image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()

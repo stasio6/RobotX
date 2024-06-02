@@ -2,7 +2,7 @@
 
 from object_detection import detect_all_targets, calculate_key_descriptors
 from cv_utilities import load_target_image, prepare_target_images
-from cv_debugging import draw_image_objects
+from cv_debugging import draw_image_objects, draw_image_corners
 from localization import localize_objects
 from aggregator import aggregate_results
 from file_utils import save_capture_data, save_json_data, read_test_data
@@ -65,10 +65,9 @@ def pipeline(iter_count, target_objs):
         if not PIPELINE_PICTURE_ONLY:
             print("Live Detect Mode, detecting objects")
             detected_objects = detect_all_targets(image_data, target_objs)
-            if PIPELINE_TEST_MODE:
-                draw_image_objects(image_data["image_path"], detected_objects)
             print("Running Localisation")
             object_locations = localize_objects(metadata, detected_objects)
+            # draw_image_objects(image_data["image_path"], detected_objects)
             print("Aggregating Results")
             aggregate_data = aggregate_results(object_locations)
             print("Saving capture data")
@@ -147,12 +146,15 @@ if __name__ == "__main__":
     parser.add_argument('--target-r', type=str, default=PIPELINE_TARGET_R_PATH, help='Target R path')
     parser.add_argument('--target-heli', type=str, default=PIPELINE_TARGET_HELI_PATH, help='Target Helipad path')
     parser.add_argument('--color', type=bool, default=PIPELINE_IMAGE_COLOR, help='Color image')
+    parser.add_argument('--pixhawk-url', type=str, default=PIXHAWK_URL, help='Pixhawk URL')
     parser.add_argument('--clean', action='store_true', default=False, help='Clean up images and jsons')
     parser.add_argument('--picture-only', action='store_true', default=False, help='Only take pictures')
     parser.add_argument('--test-mode', action='store_true', default=False, help='This mode makes pipeline read images from file, not take photos')
     args = parser.parse_args()
     if args.clean:
         clean()
+    
+    PIXHAWK_URL = args.pixhawk_url
     PIPELINE_INTERVAL_DELAY_S = args.interval
     PIPELINE_NUM_MAX_CAPTURES = args.num_captures
     PIPELINE_IMAGE_PATH_PREFIX = args.image_root

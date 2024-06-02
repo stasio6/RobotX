@@ -30,6 +30,6 @@ def aggregate_results(detected_objects):
         if len(locations[name]) > 0:
             inliers = RANSAC(locations[name])
             mean = np.mean(np.array(inliers), axis=0)
-            results[name] = {"result": mean, "inliers": len(inliers)}
+            results[name] = {"result": mean, "found": len(locations[name]), "inliers": len(inliers)}
             # print(name, ' '.join(["%.2f" % s for s in mean]))
     return results
