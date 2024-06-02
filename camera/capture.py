@@ -6,6 +6,7 @@ import autopilot as ap
 import os
 import json
 import file_utils
+from threading import Thread
 
 class SensorReader():
     def __init__(self, save_dir):
@@ -20,14 +21,25 @@ class SensorReader():
         camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.camera_resolution[0])
         camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.camera_resolution[1])
         self.camera = camera
-        self.latest_image = None
+
+        self.camera_status = False
+        self.camera_frame = None
+        self.camera_thread = Thread(target=self.update_camera, args=())
+        self.camera_thread.daemon = True
+        self.camera_thread.start()
 
         self.apm = ap.Autopilot(ap.SERIAL_PORT, ap.DEFAULT_BAUD_RATE)
         self.latest_sensors = None
 
+    def update_camera(self):
+        # keep reading next frames
+        while True:
+            if self.camera.isOpened():
+                self.camera_status, self.camera_frame = self.camera.read()
+    
     def read_sensors(self):
         timestamp = time_utils.get_timestamp(millis=True)
-        ret, image = self.camera.read() 
+        ret, image = self.camera_status, self.camera_frame
         if not ret:
             image = None
         ap_data = self.apm.get_data() 

@@ -40,10 +40,12 @@ def localize_objects(metadata, detected_objects):
     cam_R = get_camera_R(metadata["attitude"])
     for detected_object in detected_objects:
         if not detected_object["found"]:
+            detected_object["real_world_pos"] = None
             continue
         try:
             detected_object["real_world_pos"] = get_img_center(detected_object["corners"], lat, lon, alt, cam_R)
         except:
             detected_object["found"] = False
+            detected_object["real_world_pos"] = None
             print("Object localization failed - invalid object detected")
     return detected_objects
