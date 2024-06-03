@@ -1,4 +1,5 @@
 from pymavlink import mavutil
+from threading import Thread
 import time
 
 SERIAL_PORT = "/dev/ttyTHS1"
@@ -22,6 +23,14 @@ class Autopilot:
         conn.wait_heartbeat()
         print(f"Heartbeat from system (system {conn.target_system}, component {conn.target_component})")
         self.conn = conn
+
+        self.read_thread = Thread(target=self.update_messages, args=())
+        self.read_thread.daemon = True
+        self.read_thread.start()
+
+    def update_messages(self):
+        while True:
+            self.conn.recv_msg()
 
     def set_message_frequency(self):
         # We need to get GPS, IMU and Attitude data
@@ -50,10 +59,12 @@ class Autopilot:
         ]
         data = {}
         for name, msg_type in required_messages:
-            msg = self.conn.recv_match(type=msg_type, blocking=True, timeout=1)
+            msg = self.conn.messages[msg_type]
             data[name] = msg.to_dict()
         return data
 
+    def is_armed(self):
+        return self.conn.motors_armed()
         
 if __name__ == "__main__":
     autopilot = Autopilot(SERIAL_PORT, DEFAULT_BAUD_RATE)

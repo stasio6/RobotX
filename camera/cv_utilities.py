@@ -70,7 +70,7 @@ def detect_polygon_corners(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) 
     ret,thresh = cv2.threshold(gray,CV_POLYGON_BW_THRESHOLD,255,cv2.THRESH_BINARY)
     contours,hierarchy = cv2.findContours(thresh, 1, 2)
-    print("Number of contours detected:", len(contours))
+    # print("Number of contours detected:", len(contours))
     corners = []
 
     checked = 0
@@ -84,6 +84,6 @@ def detect_polygon_corners(img):
             x, y, w, h = cv2.boundingRect(cnt)
             if w >= CV_MIN_POLYGON_DETECTED and h >= CV_MIN_POLYGON_DETECTED:
                 corners.extend(approx)
-    print("Number of contours checked:", checked)
+    # print("Number of contours checked:", checked)
 
     return normalize_corners(corners)

@@ -23,7 +23,7 @@ class Localizer():
             target["image"] = img
             target["image_shape"] = img.shape
             target["descriptors"] = od.calculate_key_descriptors(img)
-            print(f"{target['name']}, dims {img.shape}")
+            # print(f"{target['name']}, dims {img.shape}")
 
     def localize(self, image_data):
         detected_objects = od.detect_all_targets(image_data, self.targets)
@@ -53,12 +53,31 @@ class Localizer():
                 print(f"{entry['name']}: found {entry['found']} at {entry['real_world_pos']}")
             print()
         
-    def localize_test(self):
-        image_data = self.sensor_reader.read_sensors()
-        loc_data = self.localize(image_data)
+    def localize_while_armed(self):
+        print("Waiting for arm signal...")
+
+        while True:
+            if not self.sensor_reader.apm.is_armed():
+                continue
+            save_dir = fu.new_save_dir()
+            sensor_reader.set_save_dir(save_dir)
+            self.save_dir = save_dir
+            print("Drone is armed, starting localization.")
+            print(f"saving at {save_dir}")
+            while True:
+                if not self.sensor_reader.apm.is_armed():
+                    print("Drone is disarmed, localization stopped.")
+                    break
+                image_data = self.sensor_reader.read_sensors()
+                loc_data = self.localize(image_data)
+                print(f"[{loc_data['timestamp']}]")
+                for entry in loc_data["localization"]:
+                    print(f"{entry['name']}: found {entry['found']} at {entry['real_world_pos']}")
+                print()
 
 if __name__ == "__main__":
-    save_dir = fu.new_save_dir()
+    # save_dir = fu.new_save_dir()
+    save_dir = "temp"
 
     sensor_reader = cap.SensorReader(save_dir)
     target_ids = [
@@ -72,4 +91,5 @@ if __name__ == "__main__":
         }
     ]
     lc = Localizer(sensor_reader, target_ids, save_dir)
-    lc.localize_loop()
+    # lc.localize_loop()
+    lc.localize_while_armed()

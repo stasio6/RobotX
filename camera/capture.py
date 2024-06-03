@@ -30,6 +30,9 @@ class SensorReader():
 
         self.apm = ap.Autopilot(ap.SERIAL_PORT, ap.DEFAULT_BAUD_RATE)
         self.latest_sensors = None
+    
+    def set_save_dir(self, new_save_dir):
+        self.save_dir = new_save_dir
 
     def update_camera(self):
         # keep reading next frames
