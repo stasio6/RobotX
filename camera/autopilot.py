@@ -65,6 +65,20 @@ class Autopilot:
 
     def is_armed(self):
         return self.conn.motors_armed()
+
+    def set_mode_alt_hold(self):
+        alt_hold_mode = 2
+        self.conn.mav.set_mode_send(
+            self.conn.target_system,
+            mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+            alt_hold_mode
+        )
+
+        ack = self.conn.recv_match(type="COMMAND_ACK", blocking=True)
+        if ack and ack.command == mavutil.mavlink.MAV_CMD_DO_SET_MODE and ack.result == mavutil.mavlink.MAV_RESULT_ACCEPTED:
+            print("Mode changed to ALT_HOLD succesfully.")
+        else:
+            print("Failed to change mode to ALT_HOLD.")
         
 if __name__ == "__main__":
     autopilot = Autopilot(SERIAL_PORT, DEFAULT_BAUD_RATE)

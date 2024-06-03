@@ -9,11 +9,13 @@ import file_utils
 from threading import Thread
 
 class SensorReader():
-    def __init__(self, save_dir):
+    def __init__(self, apm, save_dir):
         self.save_dir = save_dir
-        self.init_sensors() 
+        self.init_camera() 
 
-    def init_sensors(self):
+        self.apm = apm
+
+    def init_camera(self):
         self.camera_resolution = (1920, 1080)
         camera = cv2.VideoCapture(0)
         camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
@@ -28,8 +30,6 @@ class SensorReader():
         self.camera_thread.daemon = True
         self.camera_thread.start()
 
-        self.apm = ap.Autopilot(ap.SERIAL_PORT, ap.DEFAULT_BAUD_RATE)
-        self.latest_sensors = None
     
     def set_save_dir(self, new_save_dir):
         self.save_dir = new_save_dir
@@ -58,15 +58,11 @@ class SensorReader():
             "imu": ap_data["imu"],
             "attitude": ap_data["attitude"]
         }
-        self.latest_sensors = sensor_data
         with open(sensor_data_path, "w") as f:
             json.dump(sensor_data, f, indent=4)
 
         sensor_data["image"] = image
         return sensor_data
-
-    def get_latest(self):
-        return self.latest_sensors, self.latest_image
 
     def read_fixed(self, n, interval):
         for i in range(n):
