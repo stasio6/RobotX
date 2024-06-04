@@ -88,5 +88,5 @@ if __name__ == "__main__":
         data = autopilot.get_data()
         # end = time.time()
         # print(end - start)
-        print(data)
+        print(data["gps"])
         time.sleep(1)

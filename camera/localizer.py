@@ -9,6 +9,7 @@ import localization as loc
 import aggregator as aggr
 import file_utils as fu
 import time_utils as tu
+import autopilot as ap
 
 class Localizer():
     def __init__(self, sr, target_ids, save_dir):
@@ -76,10 +77,11 @@ class Localizer():
                 print()
 
 if __name__ == "__main__":
-    # save_dir = fu.new_save_dir()
-    save_dir = "temp"
+    save_dir = fu.new_save_dir()
+    # save_dir = "temp"
 
-    sensor_reader = cap.SensorReader(save_dir)
+    autopilot = ap.Autopilot(ap.SERIAL_PORT, ap.DEFAULT_BAUD_RATE)
+    sensor_reader = cap.SensorReader(autopilot, save_dir)
     target_ids = [
         {
             "name": "target_n",
