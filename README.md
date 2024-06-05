@@ -21,7 +21,7 @@ This project was created for [CSE237D &#8722; Embedded Systems Project](https://
 
 - **Emmanuel Anaya Gonzalez** (fanayagonzalez@ucsd.edu)
 - **Subash Katel** (skatel@ucsd.edu)
-- **Ashwin Rohit** (aalagiri@ucsd.edu)
+- **Ashwin Rohit Alagiri Rajan** (aalagiri@ucsd.edu)
 - **Stanisław Strzelecki** (sstrzelecki@ucsd.edu)
 
 We developed this project under the supervision and mentoring of [**TritonAI**](https://tritonai.org/). Without their help, none of this would be possible.
