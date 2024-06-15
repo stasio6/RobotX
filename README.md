@@ -6,7 +6,7 @@ Our project was aiming to solve one of the tasks of the [RobotX](https://robotx.
 
 To learn more about the project and see our drone in action, check out our [project website](https://eanayag.com/uav-search/).
 
-For more detailed information, including documentation, setup instructions and usage guidelines, visit our [project wiki](https://github.com/your-repo/wiki).
+For more detailed information, including documentation, setup instructions and usage guidelines, visit our [project wiki](https://github.com/stasio6/RobotX/wiki).
 
 <p align="center">
 <img src="https://lh3.googleusercontent.com/d/1FWgt4oWt6HiuqTBCGszvz_uiNCBCvyRM" width="500"/><br>
