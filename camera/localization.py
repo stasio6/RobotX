@@ -18,7 +18,7 @@ def get_relative_camera_pose(corners, square):
 def get_camera_R(imu):
     roll = imu["roll"]
     pitch = imu["pitch"]
-    yaw = imu["yaw"]
+    yaw = -imu["yaw"] # TODO: Should it be + or - ??? Probably +, but to be tested further
     return Rotation.from_euler("XYZ", (roll, pitch, yaw), degrees=False).as_matrix()
 
 def parse_gps(gps):

@@ -43,7 +43,7 @@ def detect_all_targets(image_data, target_objs):
     for target_obj in target_objs:
         try:
             found, corners = detect_object_sift(target_obj["descriptors"], camera_image_kd, target_obj["image_shape"])
-            precise_corners = get_closest_corners(corners, detected_corners)
+            precise_corners = get_closest_corners(corners, detected_corners, 50)
         except:
             found = False
             precise_corners = []

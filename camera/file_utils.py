@@ -54,16 +54,26 @@ def read_test_data(iter_count, test_directory):
             for file in files:
                 if regex.match(file):
                     return file
-    image_path = test_directory + '/captures/' + find_file('{:05d}.jpg'.format(iter_count))
-    json_path = test_directory + '/json/' + find_file('{:05d}.json'.format(iter_count))
+    def find_file_num(ext, number):
+        regex = re.compile('.*' + ext)
+        res_files = []
+        for root, dirs, files in os.walk(test_directory):
+            for file in files:
+                if regex.match(file):
+                    res_files.append(file)
+        res_files.sort()
+        return res_files[number-1]
+    # image_path = test_directory + '/' + find_file('{:03d}.png'.format(iter_count))
+    image_path = test_directory + '/' + find_file_num('.jpg', iter_count)
+    json_path = test_directory + '/' + find_file_num('sensors.json', iter_count)
     with open(json_path, "r") as json_file:
         image_data = json.load(json_file)
     # print(image_data)
     image_data["image"] = cv2.imread(image_path, cv2.IMREAD_COLOR)
     image_data["image_path"] = image_path
     metadata = {
-        "gps_data": image_data["gps"],
-        "att_data": image_data["attitude"]
+        "gps": image_data["gps"],
+        "attitude": image_data["attitude"]
     }
     return metadata, image_data
 

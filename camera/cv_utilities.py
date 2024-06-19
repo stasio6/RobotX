@@ -12,6 +12,7 @@ CV_CORNERS_MIN_DISTANCE = 30
 CV_CORNERS_MATCHING_MAX_DISTANCE = 30
 CV_POLYGON_BW_THRESHOLD = 235
 CV_MIN_POLYGON_DETECTED = 30
+CV_CURVE_DETECTION_ERROR = 0.01
 
 def load_target_image(path):
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE) # TODO: Don't read it from file
@@ -79,7 +80,7 @@ def detect_polygon_corners(img):
         if len(cnt) < 4:
             continue
         checked += 1
-        approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
+        approx = cv2.approxPolyDP(cnt, CV_CURVE_DETECTION_ERROR*cv2.arcLength(cnt, True), True)
         if len(approx) == 4:
             x, y, w, h = cv2.boundingRect(cnt)
             if w >= CV_MIN_POLYGON_DETECTED and h >= CV_MIN_POLYGON_DETECTED:
