@@ -20,9 +20,6 @@ def detect_all_targets(image_data, target_objs):
     # time_elapsed("Start", False)
     # print("Start")
     
-    ##### OLD CODE
-    # camera_image = load_camera_image(camera_image_path)
-    ##### NEW CODE 
     camera_image = image_data["image"]
     # time_elapsed("Image loaded")
     if CV_USE_DENOISING:

@@ -45,7 +45,7 @@ def prepare_target_images(target_images, calculate_key_descriptors):
         target_images = load_target_images_pickle(TARGET_IMAGES_PICKLE_PATH)
     return target_images
 
-def detect_optimal_corners(img, camera_image_path=None):
+def detect_optimal_corners(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     corners = cv2.goodFeaturesToTrack(img, CV_NUMBER_CORNERS_DETECTED, CV_CORNERS_QUALITY_LEVEL, CV_CORNERS_MIN_DISTANCE)
     corners = corners_to_subpix2(img, corners)
